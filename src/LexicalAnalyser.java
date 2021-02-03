@@ -23,6 +23,9 @@ public class LexicalAnalyser {
             int next;
             if (backup != null){
                 next = backup;
+                if(backup=='\n'){
+                    lineCounter--;
+                }
             }
             else {
                 next = reader.read();
@@ -43,7 +46,6 @@ public class LexicalAnalyser {
 
                 if (current.isFinal()){
                     int line = lineCounter - (lexeme.split("\n").length-1);
-                    lexeme = replaceSpecialCharacters(lexeme);
                     token = new Token(current.getOutputToken(), lexeme, line);
                     backup = null;
                 }
@@ -65,10 +67,4 @@ public class LexicalAnalyser {
         return token;
     }
 
-    private static String replaceSpecialCharacters(String lexeme) {
-        lexeme = lexeme.replaceAll("\n", "\\\\n");
-        lexeme = lexeme.replaceAll("\t", "\\\\t");
-        lexeme = lexeme.replaceAll("\r", "\\\\r");
-        return lexeme;
-    }
 }

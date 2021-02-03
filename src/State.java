@@ -1,3 +1,4 @@
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class State {
@@ -21,9 +22,9 @@ public class State {
         }
     }
 
-    public void addTransitionsWithException(char fromChar, char toChar, State child, char exception) {
+    public void addTransitionsWithException(char fromChar, char toChar, State child, Character[] exceptions) {
         for (int i=(int)fromChar; i<=(int)toChar; i++){
-            if ((char)i != exception){
+            if (Arrays.asList(exceptions).contains((char)i) == false){
                 addTransition((char)i, child);
             }
         }

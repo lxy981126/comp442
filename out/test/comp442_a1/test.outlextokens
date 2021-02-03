@@ -1,1 +1,2 @@
-[not,!,1][inlinecmt,//this is a inline comment,2][blockcmt,/*this is a block\ncomment*/,4]
+[break,break,1][class,class,2][id,cla,2][id,classaaa,2][continue,continue,2][id,cont,2][id,continuebbb,2][else,else,3][id,el,3][id,elsea,3][func,func,4][id,fun,4][id,funaaa,4][float,float,4][id,floa,4][id,floatbbb,4][if,if,5][id,ifaaa,5][id,i,5][integer,nteger,5][id,i,5][id,nt,5][id,i,5][id,ntegerbbb,5][id,i,5][inherits,nherits,5][id,i,5][id,nher,5][id,i,5][id,nheritsccc,5][stringlit,"this is a string",6][inlinecmt,//this is a inline comment,7][blockcmt,/*this is a block
+comment*/,8]
