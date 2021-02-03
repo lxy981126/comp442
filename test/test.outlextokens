@@ -1,2 +1,1 @@
-[quote,",1][semi,;,1][or,|,1][and,
-&,1]
+[not,!,1][qmark,?,1][assign,=,1][noteq,<>,1][inlinecmt,//this is a inline comment,2][blockcmt,/*this is a block\ncomment*/,4]

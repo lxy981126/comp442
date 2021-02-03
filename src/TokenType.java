@@ -1,5 +1,4 @@
 public enum TokenType {
-    quote,
     semi,
     or,
     minus,
@@ -10,11 +9,24 @@ public enum TokenType {
     mult,
     div,
     not,
+    assign,
     openpar,
     closepar,
     opensqbr,
     closesqbr,
     opencubr,
     closecubr,
-    eq
+    eq,
+    noteq,
+    gt,
+    lt,
+    geq,
+    leq,
+    colon,
+    coloncolon,
+    inlinecmt,
+    blockcmt,
+    id,
+    invalidCharacter
+
 }

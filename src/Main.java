@@ -17,6 +17,7 @@ public class Main {
             }
             else {
                 outTokens.write(token.toString());
+                System.out.println(token.toString());
             }
         }
         outTokens.close();
