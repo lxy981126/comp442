@@ -35,8 +35,21 @@ public enum TokenType {
     IF("if"),
     INTEGER("integer"),
     INHERITS("inherits"),
+    MAIN("main"),
+    PRIVATE("private"),
+    PUBLIC("public"),
+    READ("read"),
+    RETURN("return"),
+    STRING("string"),
+    THEN("then"),
+    VAR("var"),
+    VOID("void"),
+    WHILE("while"),
+    WRITE("write"),
     ID("id"),
-    STRING("stringlit");
+    INTEGER_NUMBER("intnum"),
+    FLOAT_NUMBER("floatnum"),
+    STRING_LITERAL("stringlit");
 
     private String name;
     private TokenType(String name) {

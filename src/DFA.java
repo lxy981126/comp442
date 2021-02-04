@@ -9,8 +9,9 @@ public class DFA {
         initial.addTransition(' ', initial);
 
         constructOperator(initial);
+        constructNumber(initial);
+        constructId(initial);
         constructString(initial);
-        constructLetter(initial);
         constructComment(initial);
 
         return initial;
@@ -21,23 +22,41 @@ public class DFA {
         constructArithmeticsOperator(initial);
         constructBinaryOperator(initial);
         constructParenthesis(initial);
-        constructSeparator(initial);
+        constructPunctuation(initial);
     }
 
-    private static void constructLetter(State initial) {
-        constructA(initial);
+    private static void constructNumber(State initial) {
+        State zero = new State(true, TokenType.INTEGER_NUMBER);
+        initial.addTransition('0', zero);
+
+        State nonZero = new State(true, TokenType.INTEGER_NUMBER);
+        initial.addTransitions('1', '9', nonZero);
+
+        State dot = new State(true, TokenType.FLOAT_NUMBER);
+        zero.addTransition('.', dot);
+        nonZero.addTransition('.', dot);
+
+    }
+
+    private static void constructId(State initial) {
         constructB(initial);
         constructC(initial);
         constructD(initial);
         constructE(initial);
         constructF(initial);
         constructI(initial);
-    }
+        constructM(initial);
+        constructP(initial);
+        constructR(initial);
+        constructS(initial);
+        constructT(initial);
+        constructV(initial);
+        constructW(initial);
 
-    private static void constructA(State initial) {
-        State a = new State(true, TokenType.ID);
-        initial.addTransition('a', a);
-        addAlphaNumTransitions(a, a);
+        Character[] excludedChar =  new Character[]{'b','c','d','e','f','i','m','p','r','s','t','v','w'};
+        State id = new State(true, TokenType.ID);
+        addLetterTransitionsWithException(initial, id, excludedChar);
+        addAlphaNumTransitions(id, id);
     }
 
     private static void constructB(State initial) {
@@ -261,7 +280,255 @@ public class DFA {
     }
 
     private static void constructM(State initial) {
+        State m = new State(true, TokenType.ID);
+        initial.addTransition('m', m);
 
+        State ma = new State(true, TokenType.ID);
+        m.addTransition('a', ma);
+        addAlphaNumTransitionsWithException(m, m, new Character[]{'a'});
+
+        State mai = new State(true, TokenType.ID);
+        ma.addTransition('i', mai);
+        addAlphaNumTransitionsWithException(ma, ma, new Character[]{'i'});
+
+        State main = new State(true, TokenType.MAIN);
+        mai.addTransition('n', main);
+
+        State mainId = new State(true, TokenType.ID);
+        addAlphaNumTransitions(main, mainId);
+        addAlphaNumTransitions(mainId, mainId);
+    }
+
+    private static void constructP(State initial) {
+        State p = new State(true, TokenType.ID);
+        initial.addTransition('p', p);
+        addAlphaNumTransitionsWithException(p,p,new Character[]{'r', 'u'});
+
+        // private
+        State pr = new State(true, TokenType.ID);
+        p.addTransition('r', pr);
+
+        State pri = new State(true, TokenType.ID);
+        pr.addTransition('i', pri);
+        addAlphaNumTransitionsWithException(pr, pr, new Character[]{'i'});
+
+        State priv = new State(true, TokenType.ID);
+        pri.addTransition('v', priv);
+        addAlphaNumTransitionsWithException(pri,pri, new Character[]{'v'});
+
+        State priva = new State(true, TokenType.ID);
+        priv.addTransition('a', priva);
+        addAlphaNumTransitionsWithException(priv, priv, new Character[]{'a'});
+
+        State privat = new State(true, TokenType.ID);
+        priva.addTransition('t', privat);
+        addAlphaNumTransitionsWithException(priva,priva, new Character[]{'t'});
+
+        State privateState = new State(true, TokenType.PRIVATE);
+        privat.addTransition('e',privateState);
+        addAlphaNumTransitionsWithException(privat, privat, new Character[]{'e'});
+
+        State privateId = new State(true, TokenType.ID);
+        addAlphaNumTransitions(privateState, privateId);
+        addAlphaNumTransitions(privateId, privateId);
+
+        // public
+        State pu = new State(true, TokenType.ID);
+        p.addTransition('u', pu);
+
+        State pub = new State(true, TokenType.ID);
+        pu.addTransition('b', pub);
+        addAlphaNumTransitionsWithException(pu, pu, new Character[]{'b'});
+
+        State publ = new State(true, TokenType.ID);
+        pub.addTransition('l', publ);
+        addAlphaNumTransitionsWithException(pub, pub, new Character[]{'l'});
+
+        State publi = new State(true, TokenType.ID);
+        publ.addTransition('i', publi);
+        addAlphaNumTransitionsWithException(publ, publ, new Character[]{'i'});
+
+        State publicState = new State(true, TokenType.PUBLIC);
+        publi.addTransition('c',publicState);
+        addAlphaNumTransitionsWithException(publi, publi, new Character[]{'c'});
+
+        State publicId = new State(true, TokenType.ID);
+        addAlphaNumTransitions(publicState, publicId);
+        addAlphaNumTransitions(publicId, publicId);
+    }
+
+    private static void constructR(State initial){
+        State r = new State(true, TokenType.ID);
+        initial.addTransition('r', r);
+
+        State re = new State(true, TokenType.ID);
+        r.addTransition('e', re);
+        addAlphaNumTransitionsWithException(r,r, new Character[]{'e'});
+
+        // read
+        State rea = new State(true, TokenType.ID);
+        re.addTransition('a', rea);
+        addAlphaNumTransitionsWithException(re, re, new Character[]{'a', 't'});
+
+        State read = new State(true, TokenType.READ);
+        rea.addTransition('d', read);
+        addAlphaNumTransitionsWithException(rea, rea, new Character[]{'d'});
+
+        State readId = new State(true, TokenType.ID);
+        addAlphaNumTransitions(read, readId);
+        addAlphaNumTransitions(readId, readId);
+
+        // return
+        State ret = new State(true, TokenType.ID);
+        re.addTransition('t', ret);
+
+        State retu = new State(true, TokenType.ID);
+        ret.addTransition('u', retu);
+        addAlphaNumTransitionsWithException(ret, ret, new Character[]{'u'});
+
+        State retur = new State(true, TokenType.ID);
+        retu.addTransition('r', retur);
+        addAlphaNumTransitionsWithException(retu, retu, new Character[]{'r'});
+
+        State returnState = new State(true, TokenType.RETURN);
+        retur.addTransition('n', returnState);
+        addAlphaNumTransitionsWithException(retur, retur, new Character[]{'n'});
+
+        State returnId = new State(true, TokenType.ID);
+        addAlphaNumTransitions(returnState, returnId);
+        addAlphaNumTransitions(returnId, returnId);
+    }
+
+    private static void constructS(State initial) {
+        State s = new State(true, TokenType.ID);
+        initial.addTransition('s', s);
+
+        // string
+        State st = new State(true, TokenType.ID);
+        s.addTransition('t', st);
+        addAlphaNumTransitionsWithException(s, s, new Character[]{'t'});
+
+        State str = new State(true, TokenType.ID);
+        st.addTransition('r', str);
+        addAlphaNumTransitionsWithException(st, st, new Character[]{'r'});
+
+        State stri = new State(true, TokenType.ID);
+        str.addTransition('i', stri);
+        addAlphaNumTransitionsWithException(str, str, new Character[]{'i'});
+
+        State strin = new State(true, TokenType.ID);
+        stri.addTransition('n', strin);
+        addAlphaNumTransitionsWithException(stri, stri, new Character[]{'n'});
+
+        State string = new State(true, TokenType.STRING);
+        strin.addTransition('g', string);
+        addAlphaNumTransitionsWithException(strin, strin, new Character[]{'g'});
+
+        State stringId = new State(true, TokenType.ID);
+        addAlphaNumTransitions(string, stringId);
+        addAlphaNumTransitions(stringId, stringId);
+    }
+
+    private static void constructT(State initial) {
+        State t = new State(true, TokenType.ID);
+        initial.addTransition('t', t);
+
+        // then
+        State th = new State(true, TokenType.ID);
+        t.addTransition('h', th);
+        addAlphaNumTransitionsWithException(t, t, new Character[]{'h'});
+
+        State the = new State(true, TokenType.ID);
+        th.addTransition('e', the);
+        addAlphaNumTransitionsWithException(th, th, new Character[]{'e'});
+
+        State then = new State(true, TokenType.THEN);
+        the.addTransition('n', then);
+        addAlphaNumTransitionsWithException(the, the, new Character[]{'n'});
+
+        State thenId = new State(true, TokenType.ID);
+        addAlphaNumTransitions(then, thenId);
+        addAlphaNumTransitions(thenId, thenId);
+    }
+
+    private static void constructV(State initial) {
+        State v = new State(true, TokenType.ID);
+        initial.addTransition('v', v);
+        addAlphaNumTransitionsWithException(v, v, new Character[]{'a', 'o'});
+
+        // var
+        State va = new State(true, TokenType.ID);
+        v.addTransition('a', va);
+
+        State var = new State(true, TokenType.VAR);
+        va.addTransition('r', var);
+        addAlphaNumTransitionsWithException(va, va, new Character[]{'r'});
+
+        State varId = new State(true, TokenType.ID);
+        addAlphaNumTransitions(var, varId);
+        addAlphaNumTransitions(varId, varId);
+
+        // void
+        State vo = new State(true, TokenType.ID);
+        v.addTransition('o', vo);
+
+        State voi = new State(true, TokenType.ID);
+        vo.addTransition('i', voi);
+        addAlphaNumTransitionsWithException(vo, vo, new Character[]{'i'});
+
+        State voidState = new State(true, TokenType.VOID);
+        voi.addTransition('d', voidState);
+        addAlphaNumTransitionsWithException(voi, voi, new Character[]{'d'});
+
+        State voidId = new State(true, TokenType.ID);
+        addAlphaNumTransitions(voidState, voidId);
+        addAlphaNumTransitions(voidId, voidId);
+    }
+
+    private static void constructW(State initial) {
+        State w = new State(true, TokenType.ID);
+        initial.addTransition('w', w);
+        addAlphaNumTransitionsWithException(w, w, new Character[]{'h', 'r'});
+
+        // while
+        State wh = new State(true, TokenType.ID);
+        w.addTransition('h', wh);
+
+        State whi = new State(true, TokenType.ID);
+        wh.addTransition('i', whi);
+        addAlphaNumTransitionsWithException(wh, wh, new Character[]{'i'});
+
+        State whil = new State(true, TokenType.ID);
+        whi.addTransition('l', whil);
+        addAlphaNumTransitionsWithException(whi, whi, new Character[]{'l'});
+
+        State whileState = new State(true, TokenType.WHILE);
+        whil.addTransition('e', whileState);
+        addAlphaNumTransitionsWithException(whil, whil, new Character[]{'e'});
+
+        State whileId = new State(true, TokenType.ID);
+        addAlphaNumTransitions(whileState, whileId);
+        addAlphaNumTransitions(whileId, whileId);
+
+        // write
+        State wr = new State(true, TokenType.ID);
+        w.addTransition('r', wr);
+
+        State wri = new State(true, TokenType.ID);
+        wr.addTransition('i', wri);
+        addAlphaNumTransitionsWithException(wr, wr, new Character[]{'i'});
+
+        State writ = new State(true, TokenType.ID);
+        wri.addTransition('t', writ);
+        addAlphaNumTransitionsWithException(wri, wri, new Character[]{'t'});
+
+        State write = new State(true, TokenType.WRITE);
+        writ.addTransition('e', write);
+        addAlphaNumTransitionsWithException(writ, writ, new Character[]{'e'});
+
+        State writeId = new State(true, TokenType.ID);
+        addAlphaNumTransitions(write, writeId);
+        addAlphaNumTransitions(writeId, writeId);
     }
 
     private static void constructComparisonOperator(State initial) {
@@ -328,7 +595,7 @@ public class DFA {
         initial.addTransition('}',closecubr);
     }
 
-    private static void constructSeparator(State initial) {
+    private static void constructPunctuation(State initial) {
         State semi = new State(true, TokenType.SEMICOLON);
         initial.addTransition(';', semi);
         State comma = new State(true, TokenType.COMMA);
@@ -341,13 +608,13 @@ public class DFA {
     }
 
     private static void constructString(State initial) {
-        State stringStart = new State(false, TokenType.STRING);
+        State stringStart = new State(false, TokenType.STRING_LITERAL);
         initial.addTransition('"', stringStart);
 
         addAlphaNumTransitions(stringStart, stringStart);
         stringStart.addTransition(' ', stringStart);
 
-        State stringFinal = new State(true, TokenType.STRING);
+        State stringFinal = new State(true, TokenType.STRING_LITERAL);
         stringStart.addTransition('"',stringFinal);
     }
 
@@ -372,17 +639,25 @@ public class DFA {
         blockEnd.addTransition('/', blockEndFinal);
     }
 
-    private static void addAlphaNumTransitions(State from, State to) {
-        from.addTransitions('0','9', to);
+    private static void addLetterTransitions(State from, State to) {
         from.addTransitions('A','Z', to);
         from.addTransitions('a','z', to);
+    }
+
+    private static void addLetterTransitionsWithException(State from, State to, Character[] exceptions) {
+        from.addTransitionsWithException('A','Z', to, exceptions);
+        from.addTransitionsWithException('a','z', to, exceptions);
+    }
+
+    private static void addAlphaNumTransitions(State from, State to) {
+        addLetterTransitions(from, to);
+        from.addTransitions('0','9', to);
         from.addTransition('_', to);
     }
 
     private static void addAlphaNumTransitionsWithException(State from, State to, Character[] exception) {
+        addLetterTransitionsWithException(from, to, exception);
         from.addTransitionsWithException('0','9', to, exception);
-        from.addTransitionsWithException('A','Z', to, exception);
-        from.addTransitionsWithException('a','z', to, exception);
         from.addTransition('_', to);
     }
 
