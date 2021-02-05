@@ -11,7 +11,7 @@ public class Token {
 
     @Override
     public String toString(){
-        return "["+type+","+lexeme+","+location+"]";
+        return "["+type+", "+lexeme+", "+location+"]";
     }
 
 }

@@ -32,9 +32,50 @@ public class DFA {
         State nonZero = new State(true, TokenType.INTEGER_NUMBER);
         initial.addTransitions('1', '9', nonZero);
 
-        State dot = new State(true, TokenType.FLOAT_NUMBER);
+        State intDigit = new State(true, TokenType.INTEGER_NUMBER);
+        nonZero.addTransitions('0', '9', intDigit);
+        intDigit.addTransitions('0', '9', intDigit);
+
+        State dot = new State(false, TokenType.FLOAT_NUMBER);
         zero.addTransition('.', dot);
         nonZero.addTransition('.', dot);
+        intDigit.addTransition('.', dot);
+
+        State dotNonzero = new State(true, TokenType.FLOAT_NUMBER);
+        dot.addTransitions('1', '9', dotNonzero);
+        dotNonzero.addTransitions('1','9', dotNonzero);
+
+        State dotZeroFinal = new State(true, TokenType.FLOAT_NUMBER);
+        dot.addTransition('0', dotZeroFinal);
+
+        State dotZeroZero = new State(false, TokenType.FLOAT_NUMBER);
+        dotZeroFinal.addTransition('0', dotZeroZero);
+        dotNonzero.addTransition('0', dotZeroZero);
+        dotZeroZero.addTransition('0', dotZeroZero);
+
+        State fraction = new State(true, TokenType.FLOAT_NUMBER);
+        dotZeroFinal.addTransitions('1', '9', fraction);
+        dotZeroZero.addTransitions('1','9', fraction);
+        fraction.addTransitions('1','9', fraction);
+        fraction.addTransition('0', dotZeroZero);
+
+        State e = new State(false, TokenType.FLOAT_NUMBER);
+        dotZeroFinal.addTransition('e', e);
+        dotNonzero.addTransition('e', e);
+        fraction.addTransition('e', e);
+
+        State eZero = new State(true, TokenType.FLOAT_NUMBER);
+        e.addTransition('0', eZero);
+
+        State ePlusMinus = new State(false, TokenType.FLOAT_NUMBER);
+        e.addTransition('+', ePlusMinus);
+        e.addTransition('-', ePlusMinus);
+        ePlusMinus.addTransition('0', eZero);
+
+        State eNonzero = new State(true, TokenType.FLOAT_NUMBER);
+        e.addTransitions('1','9', eNonzero);
+        ePlusMinus.addTransitions('1','9', eNonzero);
+        eNonzero.addTransitions('0', '9', eNonzero);
 
     }
 
@@ -596,6 +637,8 @@ public class DFA {
     }
 
     private static void constructPunctuation(State initial) {
+        State dot = new State(true, TokenType.DOT);
+        initial.addTransition('.',dot);
         State semi = new State(true, TokenType.SEMICOLON);
         initial.addTransition(';', semi);
         State comma = new State(true, TokenType.COMMA);

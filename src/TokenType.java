@@ -1,5 +1,6 @@
 public enum TokenType {
     SEMICOLON("semi"),
+    DOT("dot"),
     OR("or"),
     MINUS("minus"),
     COMMA("comma"),

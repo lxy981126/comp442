@@ -4,9 +4,9 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        String input = "./test/test";
-        FileWriter outTokens = new FileWriter(input+".outlextokens");
-        FileWriter outErrors = new FileWriter(input+".outlexerrors");
+        String input = "./test/lexpositivegrading";
+        FileWriter outTokens = new FileWriter(input+"_.outlextokens");
+        FileWriter outErrors = new FileWriter(input+"_.outlexerrors");
 
         LexicalAnalyser analyser = new LexicalAnalyser(input+".src");
 
