@@ -50,7 +50,10 @@ public enum TokenType {
     ID("id"),
     INTEGER_NUMBER("intnum"),
     FLOAT_NUMBER("floatnum"),
-    STRING_LITERAL("stringlit");
+    STRING_LITERAL("stringlit"),
+    INVALID_CHARACTER("invalidchar"),
+    INVALID_NUMBER("invalidnum"),
+    INVALID_IDENTIFIER("invalidid");
 
     private String name;
     private TokenType(String name) {

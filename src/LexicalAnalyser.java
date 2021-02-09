@@ -5,8 +5,8 @@ import java.io.IOException;
 public class LexicalAnalyser {
     private int lineCounter;
     private Integer backup;
-    private FileReader reader;
-    private State initial;
+    final private FileReader reader;
+    final private State initial;
 
     public LexicalAnalyser(String input) throws FileNotFoundException {
         lineCounter = 1;
@@ -36,18 +36,21 @@ public class LexicalAnalyser {
                     lineCounter++;
                 }
 
+                lexeme += String.valueOf(nextChar);
                 current = current.getNextState(nextChar);
                 if (current == null){
+                    if (token==null){
+                        backup = null;
+                        return new Token(TokenType.INVALID_CHARACTER, String.valueOf(nextChar), lineCounter);
+                    }
                     return token;
-                }
-                else if (current != initial){
-                    lexeme += String.valueOf(nextChar);
                 }
 
                 if (current.isFinal()){
-                    int line = lineCounter - (lexeme.split("\n").length-1);
-                    token = new Token(current.getOutputToken(), lexeme, line);
+                    token = new Token(current.getOutputToken(), lexeme, lineCounter);
                     backup = null;
+                }
+                else {
                 }
 
                 if (current.hasTransition()){
@@ -56,9 +59,15 @@ public class LexicalAnalyser {
                     continue;
                 }
 
+                if (!current.isFinal() && !current.hasTransition()){
+//                    backup = null;
+                    return new Token(Token.convertToErrorType(token.getType()), lexeme, lineCounter);
+                }
+
                 if (token != null){
                     break;
                 }
+//                backup = next;
                 next = reader.read();
             }
         }catch (IOException e){

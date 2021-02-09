@@ -2,11 +2,10 @@ public class DFA {
 
     public static State constructDFA(){
         State initial = new State(false, null);
+        State invalid = new State(false, TokenType.INVALID_CHARACTER);
 
-        initial.addTransition('\n', initial);
-        initial.addTransition('\t', initial);
-        initial.addTransition('\r', initial);
-        initial.addTransition(' ', initial);
+//        addInvalidCharacters(initial, invalid);
+        addDelimiterTransitions(initial, initial);
 
         constructOperator(initial);
         constructNumber(initial);
@@ -29,6 +28,9 @@ public class DFA {
         State zero = new State(true, TokenType.INTEGER_NUMBER);
         initial.addTransition('0', zero);
 
+//        State fail = new State(false, TokenType.FLOAT_NUMBER);
+//        zero.addTransitions('0', '9',fail);
+
         State nonZero = new State(true, TokenType.INTEGER_NUMBER);
         initial.addTransitions('1', '9', nonZero);
 
@@ -36,7 +38,7 @@ public class DFA {
         nonZero.addTransitions('0', '9', intDigit);
         intDigit.addTransitions('0', '9', intDigit);
 
-        State dot = new State(false, TokenType.FLOAT_NUMBER);
+        State dot = new State(true, TokenType.INVALID_NUMBER);
         zero.addTransition('.', dot);
         nonZero.addTransition('.', dot);
         intDigit.addTransition('.', dot);
@@ -48,10 +50,14 @@ public class DFA {
         State dotZeroFinal = new State(true, TokenType.FLOAT_NUMBER);
         dot.addTransition('0', dotZeroFinal);
 
-        State dotZeroZero = new State(false, TokenType.FLOAT_NUMBER);
+        State dotZeroZero = new State(true, TokenType.INVALID_NUMBER);
         dotZeroFinal.addTransition('0', dotZeroZero);
         dotNonzero.addTransition('0', dotZeroZero);
         dotZeroZero.addTransition('0', dotZeroZero);
+
+//        addDelimiterTransitions(dotZeroFinal,fail);
+//        addDelimiterTransitions(dotZeroZero,fail);
+//        addDelimiterTransitions(dot,fail);
 
         State fraction = new State(true, TokenType.FLOAT_NUMBER);
         dotZeroFinal.addTransitions('1', '9', fraction);
@@ -59,7 +65,7 @@ public class DFA {
         fraction.addTransitions('1','9', fraction);
         fraction.addTransition('0', dotZeroZero);
 
-        State e = new State(false, TokenType.FLOAT_NUMBER);
+        State e = new State(true, TokenType.INVALID_NUMBER);
         dotZeroFinal.addTransition('e', e);
         dotNonzero.addTransition('e', e);
         fraction.addTransition('e', e);
@@ -67,7 +73,7 @@ public class DFA {
         State eZero = new State(true, TokenType.FLOAT_NUMBER);
         e.addTransition('0', eZero);
 
-        State ePlusMinus = new State(false, TokenType.FLOAT_NUMBER);
+        State ePlusMinus = new State(true, TokenType.INVALID_NUMBER);
         e.addTransition('+', ePlusMinus);
         e.addTransition('-', ePlusMinus);
         ePlusMinus.addTransition('0', eZero);
@@ -702,6 +708,24 @@ public class DFA {
         addLetterTransitionsWithException(from, to, exception);
         from.addTransitionsWithException('0','9', to, exception);
         from.addTransition('_', to);
+    }
+
+    private static void addDelimiterTransitions(State from, State to) {
+        from.addTransition(' ', to);
+        from.addTransition('\n', to);
+        from.addTransition('\t', to);
+        from.addTransition('\r', to);
+    }
+
+    private static void addInvalidCharacters(State from, State to) {
+        from.addTransition('#', to);
+        from.addTransition('$', to);
+        from.addTransition('%', to);
+        from.addTransition('\'', to);
+        from.addTransition('@', to);
+        from.addTransition('\\', to);
+        from.addTransition('`', to);
+        from.addTransitions('~','ÿ', to);
     }
 
 }
