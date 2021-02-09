@@ -39,18 +39,11 @@ public class LexicalAnalyser {
                 lexeme += String.valueOf(nextChar);
                 current = current.getNextState(nextChar);
                 if (current == null){
-                    if (token==null){
-                        backup = null;
-                        return new Token(TokenType.INVALID_CHARACTER, String.valueOf(nextChar), lineCounter);
-                    }
                     return token;
                 }
-
-                if (current.isFinal()){
+                else if (current!=initial){
                     token = new Token(current.getOutputToken(), lexeme, lineCounter);
                     backup = null;
-                }
-                else {
                 }
 
                 if (current.hasTransition()){
@@ -59,15 +52,9 @@ public class LexicalAnalyser {
                     continue;
                 }
 
-                if (!current.isFinal() && !current.hasTransition()){
-//                    backup = null;
-                    return new Token(Token.convertToErrorType(token.getType()), lexeme, lineCounter);
-                }
-
                 if (token != null){
                     break;
                 }
-//                backup = next;
                 next = reader.read();
             }
         }catch (IOException e){

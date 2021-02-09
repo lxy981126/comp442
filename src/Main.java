@@ -4,7 +4,7 @@ import java.io.IOException;
 public class Main {
     private static int line = 1;
     public static void main(String[] args) throws IOException {
-        String input = "./test/lexnegativegrading";
+        String input = "./test/test";
         FileWriter outTokens = new FileWriter(input+"_.outlextokens");
         FileWriter outErrors = new FileWriter(input+"_.outlexerrors");
 
@@ -23,13 +23,12 @@ public class Main {
                 }
                 formatted += token.toString();
                 outTokens.write(formatted+" ");
-                System.out.print(formatted);
+                System.out.print(formatted+" ");
             }
             if (token.getType()==TokenType.INVALID_CHARACTER ||
                     token.getType()==TokenType.INVALID_IDENTIFIER ||
                     token.getType()==TokenType.INVALID_NUMBER){
                 outErrors.write("Lexical error: "+token.toString()+"\n");
-//                System.out.print(token.toString());
             }
         }
         outTokens.close();

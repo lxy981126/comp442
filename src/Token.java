@@ -4,14 +4,12 @@ public class Token {
     protected int location;
 
     public Token(TokenType type, String lexeme, int location){
-        if (type == TokenType.BLOCK_COMMENT) {
+        if (type == TokenType.BLOCK_COMMENT || type==TokenType.INVALID_COMMENT) {
             // remove /n outside /*..*/
             if (lexeme.indexOf('\n') < lexeme.indexOf('/')){
-                lexeme = lexeme.replaceFirst("\n","");
-            }
-            if (lexeme.lastIndexOf('\n') > lexeme.lastIndexOf('/')){
-                lexeme = lexeme.substring(0,lexeme.lastIndexOf('\n')) +
-                        lexeme.substring(lexeme.lastIndexOf('\n'));
+                for (int i = lexeme.indexOf('\n'); i<=lexeme.indexOf('/');i++){
+                    lexeme = lexeme.replaceFirst("\n","");
+                }
             }
             location = location - lexeme.split("\n").length + 1;
             lexeme = lexeme.replaceAll("\r", "\\\\r");
@@ -23,10 +21,12 @@ public class Token {
             lexeme = lexeme.replaceAll("\t", "");
         }
 
-        if (type==TokenType.STRING_LITERAL){
+        if (type==TokenType.STRING_LITERAL || type==TokenType.INVALID_STRING){
             lexeme = lexeme.replaceAll("\"","");
         }
-        else if (type != TokenType.INLINE_COMMENT && type != TokenType.BLOCK_COMMENT){
+        else if (type != TokenType.INLINE_COMMENT &&
+                type != TokenType.BLOCK_COMMENT &&
+                type!=TokenType.INVALID_COMMENT){
             lexeme = lexeme.replaceAll(" ", "");
         }
 

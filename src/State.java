@@ -3,12 +3,10 @@ import java.util.HashMap;
 
 public class State {
     private HashMap<Character, State> nextStates;
-    private boolean isFinal;
     private TokenType outputToken;
 
-    public State(boolean isFinal, TokenType outputToken) {
+    public State(TokenType outputToken) {
         this.nextStates = new HashMap<Character, State>();
-        this.isFinal = isFinal;
         this.outputToken = outputToken;
     }
 
@@ -30,7 +28,6 @@ public class State {
         }
     }
 
-    public boolean isFinal() { return isFinal; }
     public boolean hasTransition() { return !nextStates.isEmpty(); }
     public TokenType getOutputToken() {
         return outputToken;

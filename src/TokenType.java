@@ -53,6 +53,8 @@ public enum TokenType {
     STRING_LITERAL("stringlit"),
     INVALID_CHARACTER("invalidchar"),
     INVALID_NUMBER("invalidnum"),
+    INVALID_STRING("invalidstr"),
+    INVALID_COMMENT("invalidcomment"),
     INVALID_IDENTIFIER("invalidid");
 
     private String name;
