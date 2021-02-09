@@ -1,12 +1,16 @@
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Scanner;
 
 public class Main {
     private static int line = 1;
     public static void main(String[] args) throws IOException {
-        String input = "./test/test";
-        FileWriter outTokens = new FileWriter(input+"_.outlextokens");
-        FileWriter outErrors = new FileWriter(input+"_.outlexerrors");
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter a file name");
+        String input = scanner.nextLine().replaceAll(".src", "");
+
+        FileWriter outTokens = new FileWriter(input+".outlextokens");
+        FileWriter outErrors = new FileWriter(input+".outlexerrors");
 
         LexicalAnalyser analyser = new LexicalAnalyser(input+".src");
 
