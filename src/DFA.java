@@ -97,6 +97,10 @@ public class DFA {
         State id = new State(TokenType.ID);
         addLetterTransitionsWithException(initial, id, excludedChar);
         addAlphaNumTransitions(id, id);
+
+        State invalidId = new State(TokenType.INVALID_IDENTIFIER);
+        initial.addTransition('_',invalidId);
+        addLetterTransitions(invalidId, invalidId);
     }
 
     private static void constructB(State initial) {
@@ -676,6 +680,7 @@ public class DFA {
 
         State blockEnd = new State(TokenType.INVALID_COMMENT);
         blockStart.addTransition('*', blockEnd);
+        blockEnd.addTransitionsWithException(' ','ÿ', blockStart, new Character[]{'*'});
 
         State blockEndFinal = new State(TokenType.BLOCK_COMMENT);
         blockEnd.addTransition('/', blockEndFinal);

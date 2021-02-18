@@ -1,0 +1,6 @@
+Lexical error: [invalidid, _ab, 5]
+Lexical error: [invalidnum, 3.20, 10]
+Lexical error: [invalidnum, 4., 11]
+Lexical error: [invalidnum, 120.34e+, 12]
+Lexical error: [invalidnum, 120.34e-, 13]
+Lexical error: [invalidnum, 120.34e, 14]
