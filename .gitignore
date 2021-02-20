@@ -28,3 +28,4 @@ test/test_.outlextokens
 test/lexnegativegrading_.outlexerrors
 test/lexnegativegrading_.outlextokens
 out/
+grm/
