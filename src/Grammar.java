@@ -63,42 +63,5 @@ public class Grammar {
         startingSymbol = terminalHashMap.get("START");
     }
 
-    public static HashMap<NonTerminal, ArrayList<Symbol>> buildFirstFollowSet(String firstSetFile)
-            throws FileNotFoundException{
-        HashMap<NonTerminal, ArrayList<Symbol>> firstSet = new HashMap<>();
-        Scanner scanner = new Scanner(new File(firstSetFile));
 
-        while(scanner.hasNext()) {
-            String line = scanner.nextLine();
-            if (line.contains("FIRST") || line.contains("FOLLOW")) {
-                int leftBracket = line.indexOf("<");
-                int rightBracket = line.indexOf(">");
-                String name = line.substring(leftBracket, rightBracket + 1);
-                NonTerminal nonTerminal = new NonTerminal(name);
-
-                ArrayList<Symbol> arrayToAdd = firstSet.get(nonTerminal);
-                if (arrayToAdd == null) {
-                    arrayToAdd = new ArrayList<>();
-                    firstSet.put(nonTerminal, arrayToAdd);
-                }
-
-                int leftSquare = line.indexOf("[");
-                int rightSquare = line.indexOf("]");
-                String terminalsName = line.substring(leftSquare, rightSquare + 1);
-                terminalsName = terminalsName.replaceAll("\\[", "").replaceAll("\\]","");
-                String[] terminals = terminalsName.replaceAll(" ", "").split(",");
-
-                for (String terminal:terminals) {
-                    if (terminal.equals("EPSILON")) {
-                        arrayToAdd.add(new Epsilon());
-                    }
-                    else {
-                        arrayToAdd.add(new Terminal(terminal));
-                    }
-                }
-
-            }
-        }
-        return firstSet;
-    }
 }

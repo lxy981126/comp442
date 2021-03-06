@@ -40,26 +40,7 @@ public class Main {
 //        outTokens.close();
 //        outErrors.close();
 
-//        // first set test
-//        Grammar g = new Grammar("./grm/non_ambiguous.grm");
-//        HashMap<NonTerminal, ArrayList<Symbol>> first = Grammar.buildFirstFollowSet("grm/non_ambiguous.grm.first");
-//        for (HashMap.Entry entry:first.entrySet()) {
-//            String str = entry.getKey() + ": {";
-//            for (Symbol symbol:(ArrayList<Symbol>)entry.getValue()) {
-//                str += symbol + ", ";
-//            }
-//            System.out.println(str + "}");
-//        }
-
-        // follow set test
-        HashMap<NonTerminal, ArrayList<Symbol>> follow = Grammar.buildFirstFollowSet("grm/non_ambiguous.grm.follow");
-        for (HashMap.Entry entry:follow.entrySet()) {
-            String str = entry.getKey() + ": {";
-            for (Symbol symbol:(ArrayList<Symbol>)entry.getValue()) {
-                str += symbol + ", ";
-            }
-            System.out.println(str + "}");
-        }
+        Parser parser = new Parser();
     }
 
 }
