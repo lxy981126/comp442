@@ -1,5 +1,5 @@
 public class Epsilon extends Symbol {
-    protected Epsilon(String name) {
-        super(name);
+    protected Epsilon() {
+        super("EPSILON");
     }
 }
