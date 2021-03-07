@@ -3,15 +3,18 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.Stack;
 
 public class Parser {
     Grammar grammar;
     HashMap<String, ArrayList<String>> firstSet;
     HashMap<String, ArrayList<String>> followSet;
     HashMap<String, HashMap<String, Production>> parsingTable;
+    Stack stack;
 
     public Parser() {
         try {
+            stack = new Stack();
             this.grammar = new Grammar("./grm/non_ambiguous.grm");
             this.firstSet = buildFirstFollowSet("grm/non_ambiguous.grm.first");
             addTerminalsToFirstSet();
@@ -21,6 +24,12 @@ public class Parser {
         catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    public void parse() {
+        stack.push("$");
+        stack.push("<START>");
+
     }
 
     public void addTerminalsToFirstSet() {
@@ -56,9 +65,8 @@ public class Parser {
 
                 int leftSquare = line.indexOf("[");
                 int rightSquare = line.indexOf("]");
-                String terminalsName = line.substring(leftSquare, rightSquare + 1);
-                terminalsName = terminalsName.replaceAll("\\[", "").replaceAll("\\]","");
-                String[] terminals = terminalsName.replaceAll(" ", "").split(",");
+                String terminalsName = line.substring(leftSquare + 1, rightSquare);
+                String[] terminals = terminalsName.split(", ");
 
                 for (String terminal:terminals) {
                     if (terminal.equals("EPSILON")) {
@@ -85,6 +93,7 @@ public class Parser {
             HashMap<String, Production> row = parsingTable.get(nonTerminal.name);
             if (row == null) {
                 row = new HashMap<>();
+                parsingTable.put(nonTerminal.name, row);
             }
 
             ArrayList<Terminal> terminals = grammar.terminals;
@@ -94,8 +103,10 @@ public class Parser {
                 if (first.contains(terminal.name)) {
                     row.put(terminal.name, production);
                 }
+                else {
+                    // TODO error
+                }
             }
-            parsingTable.put(nonTerminal.name, row);
         }
     }
 
