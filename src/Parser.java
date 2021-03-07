@@ -10,7 +10,7 @@ public class Parser {
     HashMap<String, ArrayList<String>> firstSet;
     HashMap<String, ArrayList<String>> followSet;
     HashMap<String, HashMap<String, Production>> parsingTable;
-    Stack stack;
+    Stack<String> stack;
 
     public Parser() {
         try {
@@ -26,17 +26,33 @@ public class Parser {
         }
     }
 
-    public void parse() {
+    public void parse(String inputFile) throws FileNotFoundException {
+        LexicalAnalyser analyser = new LexicalAnalyser(inputFile);
+
         stack.push("$");
         stack.push("<START>");
 
+        Token nextToken = analyser.nextToken();
+        while (stack.firstElement().equals("$")) {
+            String top = stack.firstElement();
+
+            if (grammar.terminals.contains(top)) {
+                if (top.equals(nextToken.toString())) {
+                    stack.pop();
+                    nextToken = analyser.nextToken();
+                }
+                else {
+                    // TODO:function skipErrors()
+                }
+            }
+        }
     }
 
     public void addTerminalsToFirstSet() {
-        for (Terminal terminal:grammar.terminals) {
+        for (String terminal:grammar.terminals) {
             ArrayList<String> list = new ArrayList<>();
-            list.add(terminal.name);
-            firstSet.put(terminal.name, list);
+            list.add(terminal);
+            firstSet.put(terminal, list);
         }
 
         ArrayList<String> list = new ArrayList<>();
@@ -54,13 +70,12 @@ public class Parser {
             if (line.contains("FIRST") || line.contains("FOLLOW")) {
                 int leftBracket = line.indexOf("<");
                 int rightBracket = line.indexOf(">");
-                String name = line.substring(leftBracket, rightBracket + 1);
-                NonTerminal nonTerminal = new NonTerminal(name);
+                String nonTerminal = line.substring(leftBracket, rightBracket + 1);
 
-                ArrayList<String> arrayToAdd = set.get(nonTerminal.name);
+                ArrayList<String> arrayToAdd = set.get(nonTerminal);
                 if (arrayToAdd == null) {
                     arrayToAdd = new ArrayList<>();
-                    set.put(nonTerminal.name, arrayToAdd);
+                    set.put(nonTerminal, arrayToAdd);
                 }
 
                 int leftSquare = line.indexOf("[");
@@ -69,12 +84,7 @@ public class Parser {
                 String[] terminals = terminalsName.split(", ");
 
                 for (String terminal:terminals) {
-                    if (terminal.equals("EPSILON")) {
-                        arrayToAdd.add("EPSILON");
-                    }
-                    else {
-                        arrayToAdd.add(terminal);
-                    }
+                    arrayToAdd.add(terminal);
                 }
 
             }
@@ -87,21 +97,21 @@ public class Parser {
         ArrayList<Production> productions = grammar.productions;
 
         for (Production production:productions) {
-            NonTerminal nonTerminal = production.lhs;
-            Symbol rhsSymbol = production.rhs.get(0);
+            String nonTerminal = production.lhs;
+            String rhsSymbol = production.rhs.get(0);
 
-            HashMap<String, Production> row = parsingTable.get(nonTerminal.name);
+            HashMap<String, Production> row = parsingTable.get(nonTerminal);
             if (row == null) {
                 row = new HashMap<>();
-                parsingTable.put(nonTerminal.name, row);
+                parsingTable.put(nonTerminal, row);
             }
 
-            ArrayList<Terminal> terminals = grammar.terminals;
-            for (Terminal terminal:terminals) {
-                ArrayList<String> first = firstSet.get(rhsSymbol.name);
+            ArrayList<String> terminals = grammar.terminals;
+            for (String terminal:terminals) {
+                ArrayList<String> first = firstSet.get(rhsSymbol);
 
-                if (first.contains(terminal.name)) {
-                    row.put(terminal.name, production);
+                if (first.contains(terminal)) {
+                    row.put(terminal, production);
                 }
                 else {
                     // TODO error
