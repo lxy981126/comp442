@@ -55,7 +55,6 @@ public class Grammar {
 
             if (production != null) {
                 productions.add(production);
-                System.out.println(production);
             }
         }
         terminals = new ArrayList<>(terminalHashMap.values());
