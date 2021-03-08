@@ -40,7 +40,7 @@ public class Main {
 //        outTokens.close();
 //        outErrors.close();
 
-        String inputFile = "bubblesort.src";
+        String inputFile = "test/a2/test.src";
         Parser parser = new Parser();
         parser.parse(inputFile);
     }

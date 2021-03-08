@@ -1,9 +1,5 @@
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Scanner;
-import java.util.Stack;
+import java.io.*;
+import java.util.*;
 
 public class Parser {
     Grammar grammar;
@@ -15,10 +11,10 @@ public class Parser {
     public Parser() {
         try {
             stack = new Stack();
-            this.grammar = new Grammar("./grm/non_ambiguous.grm");
-            this.firstSet = buildFirstFollowSet("grm/non_ambiguous.grm.first");
+            this.grammar = new Grammar("./grm/non_ambiguous_LL1.grm");
+            this.firstSet = buildFirstFollowSet("grm/non_ambiguous_LL1.grm.first");
             addTerminalsToFirstSet();
-            this.followSet = buildFirstFollowSet("grm/non_ambiguous.grm.follow");
+            this.followSet = buildFirstFollowSet("grm/non_ambiguous_LL1.grm.follow");
             buildParsingTable();
         }
         catch (FileNotFoundException e) {
@@ -26,29 +22,64 @@ public class Parser {
         }
     }
 
-    public void parse(String inputFile) throws FileNotFoundException {
+    public boolean parse(String inputFile) throws FileNotFoundException {
+        boolean error = false;
         LexicalAnalyser analyser = new LexicalAnalyser(inputFile);
 
         stack.push("$");
-        stack.push("<START>");
+        stack.push(grammar.startingSymbol);
 
         Token nextToken = analyser.nextToken();
-        while (stack.firstElement().equals("$")) {
-            String top = stack.firstElement();
+        while (!stack.peek().equals("$") && nextToken != null) {
+            String top = stack.peek();
 
             if (grammar.terminals.contains(top)) {
-                if (top.equals(nextToken.toString())) {
+                if (top.equals(nextToken.getType().toString()) || top.equals(nextToken.lexeme)) {
                     stack.pop();
                     nextToken = analyser.nextToken();
                 }
                 else {
-                    // TODO:function skipErrors()
+                    // TODO: function skipErrors()
+                    error = true;
                 }
+            }
+            else {
+                HashMap<String, Production> row = parsingTable.get(top);
+
+                Production production = row.get(nextToken.lexeme) == null ?
+                        row.get(nextToken.getType().toString()) : row.get(nextToken.lexeme);
+
+                if (production != null) {
+                    System.out.println(production);
+                    stack.pop();
+                    inverseRHSMultiplePush(production);
+                }
+                else {
+                    // TODO: function skipErrors()
+                    error = true;
+                }
+            }
+        }
+
+        if (!stack.peek().equals("$") || error == true) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+
+    private void inverseRHSMultiplePush(Production production) {
+        ArrayList<String> rhs = production.rhs;
+        for (int i = rhs.size() - 1; i >= 0 ; i--) {
+            String symbol = rhs.get(i);
+            if (!symbol.equals("EPSILON")) {
+                stack.push(symbol);
             }
         }
     }
 
-    public void addTerminalsToFirstSet() {
+    private void addTerminalsToFirstSet() {
         for (String terminal:grammar.terminals) {
             ArrayList<String> list = new ArrayList<>();
             list.add(terminal);
@@ -60,7 +91,7 @@ public class Parser {
         firstSet.put("EPSILON", list);
     }
 
-    public HashMap<String, ArrayList<String>> buildFirstFollowSet(String file)
+    private HashMap<String, ArrayList<String>> buildFirstFollowSet(String file)
             throws FileNotFoundException{
         HashMap<String, ArrayList<String>> set= new HashMap<>();
         Scanner scanner = new Scanner(new File(file));
@@ -70,7 +101,7 @@ public class Parser {
             if (line.contains("FIRST") || line.contains("FOLLOW")) {
                 int leftBracket = line.indexOf("<");
                 int rightBracket = line.indexOf(">");
-                String nonTerminal = line.substring(leftBracket, rightBracket + 1);
+                String nonTerminal = line.substring(leftBracket + 1, rightBracket);
 
                 ArrayList<String> arrayToAdd = set.get(nonTerminal);
                 if (arrayToAdd == null) {
@@ -79,11 +110,15 @@ public class Parser {
                 }
 
                 int leftSquare = line.indexOf("[");
-                int rightSquare = line.indexOf("]");
+                int rightSquare = line.lastIndexOf("]");
                 String terminalsName = line.substring(leftSquare + 1, rightSquare);
                 String[] terminals = terminalsName.split(", ");
 
                 for (String terminal:terminals) {
+                    if (terminal.contains("'"))
+                    {
+                        terminal = terminal.substring(1, terminal.length() - 1);
+                    }
                     arrayToAdd.add(terminal);
                 }
 
@@ -92,13 +127,12 @@ public class Parser {
         return set;
     }
 
-    public void buildParsingTable() {
+    private void buildParsingTable() {
         parsingTable = new HashMap<>();
         ArrayList<Production> productions = grammar.productions;
 
         for (Production production:productions) {
             String nonTerminal = production.lhs;
-            String rhsSymbol = production.rhs.get(0);
 
             HashMap<String, Production> row = parsingTable.get(nonTerminal);
             if (row == null) {
@@ -106,17 +140,82 @@ public class Parser {
                 parsingTable.put(nonTerminal, row);
             }
 
+            ArrayList<String> first = getFirstSet(production);
             ArrayList<String> terminals = grammar.terminals;
             for (String terminal:terminals) {
-                ArrayList<String> first = firstSet.get(rhsSymbol);
-
                 if (first.contains(terminal)) {
                     row.put(terminal, production);
                 }
-                else {
-                    // TODO error
+            }
+
+            if (first.contains("EPSILON")) {
+                ArrayList<String> follow = followSet.get(nonTerminal);
+                for (String terminal:terminals) {
+                    if (follow.contains(terminal)) {
+                        row.put(terminal, production);
+                    }
                 }
             }
+
+            for (String terminal:terminals) {
+                if (row.get(terminal) == null) {
+                    row.put(terminal, null);
+                }
+            }
+        }
+        outputParsingTableToFile();
+    }
+
+    private ArrayList<String> getFirstSet(Production production) {
+        ArrayList<String> first = new ArrayList<>();
+
+        int i = 0;
+        String rhsSymbol;
+        ArrayList<String> firstSetRhsSymbol;
+
+        do {
+            rhsSymbol = production.rhs.get(i);
+            firstSetRhsSymbol = firstSet.get(rhsSymbol);
+            for (String symbol:firstSetRhsSymbol) {
+                if (!first.contains(symbol)) {
+                    first.add(symbol);
+                }
+            }
+            i++;
+        }while (firstSetRhsSymbol.contains("EPSILON") && i<production.rhs.size());
+        return first;
+    }
+
+    private void outputParsingTableToFile() {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("out/ParsingTable.tsv"));
+
+            writer.write("\t");
+            for (String header:grammar.terminals) {
+                writer.write(header+"\t");
+            }
+            writer.write("\n");
+
+
+            for (Map.Entry row:parsingTable.entrySet()) {
+                boolean allNull = true;
+                writer.write(row.getKey().toString()+"\t");
+
+                for (String header:grammar.terminals) {
+                    HashMap<String, Production> values = (HashMap<String, Production>)row.getValue();
+                    writer.write(values.get(header)+"\t");
+                    if (values.get(header)!=null) {
+                        allNull = false;
+                    }
+                }
+                if (allNull) {
+                    System.out.println(row.getKey()+" all null");
+                }
+                writer.write("\n");
+            }
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

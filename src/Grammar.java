@@ -23,7 +23,11 @@ public class Grammar {
 
             for (String symbol:symbols) {
                 if (symbol.contains("<") && symbol.contains(">")) {
-                    nonTerminals.add(symbol);
+                    symbol = symbol.substring(1, symbol.length() - 1);
+                    if (!nonTerminals.contains(nonTerminals)) {
+                        nonTerminals.add(symbol);
+                    }
+
                     if (lhs) {
                         production = new Production(symbol);
                     }
@@ -32,7 +36,10 @@ public class Grammar {
                     }
                 }
                 else if (symbol.contains("'")) {
-                    terminals.add(symbol);
+                    symbol = symbol.substring(1, symbol.length() - 1);
+                    if (!terminals.contains(symbol)) {
+                        terminals.add(symbol);
+                    }
                     production.addRHS(symbol);
                 }
                 else if (symbol.contains("::=")) {
@@ -47,7 +54,7 @@ public class Grammar {
                 productions.add(production);
             }
         }
-        startingSymbol = "<START>";
+        startingSymbol = "START";
     }
 
 }
