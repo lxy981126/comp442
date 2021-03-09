@@ -3,10 +3,10 @@ import java.util.*;
 
 public class Parser {
     Grammar grammar;
-    HashMap<String, ArrayList<String>> firstSet;
-    HashMap<String, ArrayList<String>> followSet;
-    HashMap<String, HashMap<String, Production>> parsingTable;
-    Stack<String> parsingStack;
+    HashMap<SyntaxSymbol, ArrayList<SyntaxSymbol>> firstSet;
+    HashMap<SyntaxSymbol, ArrayList<SyntaxSymbol>> followSet;
+    HashMap<SyntaxSymbol, HashMap<SyntaxSymbol, Production>> parsingTable;
+    Stack<SyntaxSymbol> parsingStack;
     LexicalAnalyser analyser;
 
     public Parser(String inputFile) {
@@ -28,19 +28,19 @@ public class Parser {
     public boolean parse() {
         boolean error = false;
 
-        parsingStack.push("$");
+        parsingStack.push(new SyntaxSymbol("$", SyntaxSymbolType.END_OF_FILE));
         parsingStack.push(grammar.startingSymbol);
 
         Token nextToken = analyser.nextToken();
-        while (!parsingStack.peek().equals("$") && nextToken != null) {
-            String top = parsingStack.peek();
+        while (parsingStack.peek().type != SyntaxSymbolType.END_OF_FILE && nextToken != null) {
+            SyntaxSymbol top = parsingStack.peek();
 
             if (nextToken.getType() == TokenType.BLOCK_COMMENT || nextToken.getType() == TokenType.INLINE_COMMENT) {
                 nextToken = analyser.nextToken();
             }
 
-            if (grammar.terminals.contains(top)) {
-                if (top.equals(nextToken.getType().toString()) || top.equals(nextToken.lexeme)) {
+            if (top.type == SyntaxSymbolType.TERMINAL) {
+                if (top.equals(nextToken)) {
                     parsingStack.pop();
                     nextToken = analyser.nextToken();
                 }
@@ -50,11 +50,11 @@ public class Parser {
                 }
             }
             else {
-                HashMap<String, Production> row = parsingTable.get(top);
+                HashMap<SyntaxSymbol, Production> row = parsingTable.get(top);
+                SyntaxSymbol lexeme = new SyntaxSymbol(nextToken.lexeme, SyntaxSymbolType.TERMINAL);
+                SyntaxSymbol type = new SyntaxSymbol(nextToken.getType().toString(), SyntaxSymbolType.TERMINAL);
 
-                Production production = row.get(nextToken.lexeme) == null ?
-                        row.get(nextToken.getType().toString()) : row.get(nextToken.lexeme);
-
+                Production production = row.get(lexeme) == null ? row.get(type) : row.get(lexeme);
                 if (production != null) {
                     System.out.println(production);
                     parsingStack.pop();
@@ -67,7 +67,7 @@ public class Parser {
             }
         }
 
-        if (!parsingStack.peek().equals("$") || error == true) {
+        if (parsingStack.peek().type != SyntaxSymbolType.END_OF_FILE || error == true) {
             return false;
         }
         else {
@@ -78,8 +78,8 @@ public class Parser {
     private void skipError(Token nextToken) {
        System.err.println("Syntax error at line " + nextToken.location + ": expected \"" + parsingStack.peek() +
                "\", got \"" + nextToken.lexeme+"\'");
-       ArrayList<String> follow = followSet.get(parsingStack.peek());
-       ArrayList<String> first = firstSet.get(parsingStack.peek());
+       ArrayList<SyntaxSymbol> follow = followSet.get(parsingStack.peek());
+       ArrayList<SyntaxSymbol> first = firstSet.get(parsingStack.peek());
 
        if ((!follow.contains(nextToken.lexeme) && !follow.contains(nextToken.getType().toString()))) {
            parsingStack.pop();
@@ -96,37 +96,38 @@ public class Parser {
     }
 
     private void inverseRHSMultiplePush(Production production) {
-        ArrayList<String> rhs = production.rhs;
+        ArrayList<SyntaxSymbol> rhs = production.rhs;
         for (int i = rhs.size() - 1; i >= 0 ; i--) {
-            String symbol = rhs.get(i);
-            if (!symbol.equals("EPSILON")) {
+            SyntaxSymbol symbol = rhs.get(i);
+            if (!symbol.equals(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON))) {
                 parsingStack.push(symbol);
             }
         }
     }
 
     private void addTerminalsToFirstSet() {
-        for (String terminal:grammar.terminals) {
-            ArrayList<String> list = new ArrayList<>();
+        for (SyntaxSymbol terminal:grammar.terminals) {
+            ArrayList<SyntaxSymbol> list = new ArrayList<>();
             list.add(terminal);
             firstSet.put(terminal, list);
         }
 
-        ArrayList<String> list = new ArrayList<>();
-        list.add("EPSILON");
-        firstSet.put("EPSILON", list);
+        ArrayList<SyntaxSymbol> list = new ArrayList<>();
+        SyntaxSymbol epsilon = new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON);
+        list.add(epsilon);
+        firstSet.put(epsilon, list);
     }
 
     private void addTerminalsToFollowSet() {
-        for (String terminal:grammar.terminals) {
+        for (SyntaxSymbol terminal:grammar.terminals) {
             followSet.put(terminal, new ArrayList<>());
         }
-        followSet.put("EP", new ArrayList<>());
+        followSet.put(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON), new ArrayList<>());
     }
 
-    private HashMap<String, ArrayList<String>> buildFirstFollowSet(String file)
+    private HashMap<SyntaxSymbol, ArrayList<SyntaxSymbol>> buildFirstFollowSet(String file)
             throws FileNotFoundException{
-        HashMap<String, ArrayList<String>> set= new HashMap<>();
+        HashMap<SyntaxSymbol, ArrayList<SyntaxSymbol>> set= new HashMap<>();
         Scanner scanner = new Scanner(new File(file));
 
         while(scanner.hasNext()) {
@@ -135,11 +136,12 @@ public class Parser {
                 int leftBracket = line.indexOf("<");
                 int rightBracket = line.indexOf(">");
                 String nonTerminal = line.substring(leftBracket + 1, rightBracket);
+                SyntaxSymbol syntaxSymbol = new SyntaxSymbol(nonTerminal, SyntaxSymbolType.NON_TERMINAL);
 
-                ArrayList<String> arrayToAdd = set.get(nonTerminal);
+                ArrayList<SyntaxSymbol> arrayToAdd = set.get(syntaxSymbol);
                 if (arrayToAdd == null) {
                     arrayToAdd = new ArrayList<>();
-                    set.put(nonTerminal, arrayToAdd);
+                    set.put(syntaxSymbol, arrayToAdd);
                 }
 
                 int leftSquare = line.indexOf("[");
@@ -147,12 +149,16 @@ public class Parser {
                 String terminalsName = line.substring(leftSquare + 1, rightSquare);
                 String[] terminals = terminalsName.split(", ");
 
-                for (String terminal:terminals) {
-                    if (terminal.contains("'"))
+                for (String terminalName:terminals) {
+                    if (terminalName.contains("EPSILON"))
                     {
-                        terminal = terminal.substring(1, terminal.length() - 1);
+                        arrayToAdd.add(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON));
                     }
-                    arrayToAdd.add(terminal);
+                    else {
+                        terminalName = terminalName.substring(1, terminalName.length() - 1);
+                        SyntaxSymbol terminal = new SyntaxSymbol(terminalName, SyntaxSymbolType.TERMINAL);
+                        arrayToAdd.add(terminal);
+                    }
                 }
 
             }
@@ -165,32 +171,32 @@ public class Parser {
         ArrayList<Production> productions = grammar.productions;
 
         for (Production production:productions) {
-            String nonTerminal = production.lhs;
+            SyntaxSymbol nonTerminal = production.lhs;
 
-            HashMap<String, Production> row = parsingTable.get(nonTerminal);
+            HashMap<SyntaxSymbol, Production> row = parsingTable.get(nonTerminal);
             if (row == null) {
                 row = new HashMap<>();
                 parsingTable.put(nonTerminal, row);
             }
 
-            ArrayList<String> first = getFirstSet(production);
-            ArrayList<String> terminals = grammar.terminals;
-            for (String terminal:terminals) {
+            ArrayList<SyntaxSymbol> first = getFirstSet(production);
+            ArrayList<SyntaxSymbol> terminals = grammar.terminals;
+            for (SyntaxSymbol terminal:terminals) {
                 if (first.contains(terminal)) {
                     row.put(terminal, production);
                 }
             }
 
-            if (first.contains("EPSILON")) {
-                ArrayList<String> follow = followSet.get(nonTerminal);
-                for (String terminal:terminals) {
+            if (first.contains(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON))) {
+                ArrayList<SyntaxSymbol> follow = followSet.get(nonTerminal);
+                for (SyntaxSymbol terminal:terminals) {
                     if (follow.contains(terminal)) {
                         row.put(terminal, production);
                     }
                 }
             }
 
-            for (String terminal:terminals) {
+            for (SyntaxSymbol terminal:terminals) {
                 if (row.get(terminal) == null) {
                     row.put(terminal, null);
                 }
@@ -199,23 +205,26 @@ public class Parser {
         outputParsingTableToFile();
     }
 
-    private ArrayList<String> getFirstSet(Production production) {
-        ArrayList<String> first = new ArrayList<>();
+    private ArrayList<SyntaxSymbol> getFirstSet(Production production) {
+        ArrayList<SyntaxSymbol> first = new ArrayList<>();
 
         int i = 0;
-        String rhsSymbol;
-        ArrayList<String> firstSetRhsSymbol;
+        SyntaxSymbol rhsSymbol;
+        ArrayList<SyntaxSymbol> firstSetRhsSymbol;
+        boolean epsilon = true;
 
         do {
             rhsSymbol = production.rhs.get(i);
             firstSetRhsSymbol = firstSet.get(rhsSymbol);
-            for (String symbol:firstSetRhsSymbol) {
+            for (SyntaxSymbol symbol:firstSetRhsSymbol) {
                 if (!first.contains(symbol)) {
                     first.add(symbol);
                 }
             }
             i++;
-        }while (firstSetRhsSymbol.contains("EPSILON") && i<production.rhs.size());
+            epsilon = firstSetRhsSymbol.contains(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON));
+        }while (epsilon &&
+                i<production.rhs.size());
         return first;
     }
 
@@ -224,7 +233,7 @@ public class Parser {
             BufferedWriter writer = new BufferedWriter(new FileWriter("out/ParsingTable.tsv"));
 
             writer.write("\t");
-            for (String header:grammar.terminals) {
+            for (SyntaxSymbol header:grammar.terminals) {
                 writer.write(header+"\t");
             }
             writer.write("\n");
@@ -233,8 +242,8 @@ public class Parser {
             for (Map.Entry row:parsingTable.entrySet()) {
                 writer.write(row.getKey().toString()+"\t");
 
-                for (String header:grammar.terminals) {
-                    HashMap<String, Production> values = (HashMap<String, Production>)row.getValue();
+                for (SyntaxSymbol header:grammar.terminals) {
+                    HashMap<SyntaxSymbol, Production> values = (HashMap<SyntaxSymbol, Production>)row.getValue();
                     writer.write(values.get(header)+"\t");
                 }
                 writer.write("\n");

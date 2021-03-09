@@ -1,3 +1,5 @@
+import java.util.Objects;
+
 public class Token {
     private TokenType type;
     protected String lexeme;
@@ -49,10 +51,25 @@ public class Token {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (o instanceof SyntaxSymbol) {
+            SyntaxSymbol symbol = (SyntaxSymbol) o;
+            return type.toString().equals(symbol.name) || lexeme.equals(symbol.name);
+        }
+        else {
+            return type == type && location == location && lexeme == lexeme;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, lexeme);
+    }
+
+    @Override
     public String toString(){
         return "["+type+", "+lexeme+", "+location+"]";
     }
-    public int getLocation() { return location; }
     public TokenType getType() { return type; }
 
 }

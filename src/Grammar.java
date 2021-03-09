@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Grammar {
-    ArrayList<String> terminals;
-    ArrayList<String> nonTerminals;
-    String startingSymbol;
+    ArrayList<SyntaxSymbol> terminals;
+    ArrayList<SyntaxSymbol> nonTerminals;
+    SyntaxSymbol startingSymbol;
     ArrayList<Production> productions;
 
     public Grammar(String grammarFile) throws FileNotFoundException {
@@ -24,29 +24,33 @@ public class Grammar {
             for (String symbol:symbols) {
                 if (symbol.contains("<") && symbol.contains(">")) {
                     symbol = symbol.substring(1, symbol.length() - 1);
-                    if (!nonTerminals.contains(nonTerminals)) {
-                        nonTerminals.add(symbol);
+                    SyntaxSymbol syntaxSymbol = new SyntaxSymbol(symbol, SyntaxSymbolType.NON_TERMINAL);
+
+                    if (!nonTerminals.contains(syntaxSymbol)) {
+                        nonTerminals.add(syntaxSymbol);
                     }
 
                     if (lhs) {
-                        production = new Production(symbol);
+                        production = new Production(syntaxSymbol);
                     }
                     else {
-                        production.addRHS(symbol);
+                        production.addRHS(syntaxSymbol);
                     }
                 }
                 else if (symbol.contains("'")) {
                     symbol = symbol.substring(1, symbol.length() - 1);
-                    if (!terminals.contains(symbol)) {
-                        terminals.add(symbol);
+                    SyntaxSymbol syntaxSymbol = new SyntaxSymbol(symbol, SyntaxSymbolType.TERMINAL);
+
+                    if (!terminals.contains(syntaxSymbol)) {
+                        terminals.add(syntaxSymbol);
                     }
-                    production.addRHS(symbol);
+                    production.addRHS(syntaxSymbol);
                 }
                 else if (symbol.contains("::=")) {
                     lhs = false;
                 }
                 else if (symbol.contains("EPSILON")) {
-                    production.addRHS(symbol);
+                    production.addRHS(new SyntaxSymbol(symbol, SyntaxSymbolType.EPSILON));
                 }
             }
 
@@ -54,7 +58,7 @@ public class Grammar {
                 productions.add(production);
             }
         }
-        startingSymbol = "START";
+        startingSymbol = new SyntaxSymbol("START", SyntaxSymbolType.NON_TERMINAL);
     }
 
 }
