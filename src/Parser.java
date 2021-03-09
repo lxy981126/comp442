@@ -6,15 +6,18 @@ public class Parser {
     HashMap<String, ArrayList<String>> firstSet;
     HashMap<String, ArrayList<String>> followSet;
     HashMap<String, HashMap<String, Production>> parsingTable;
-    Stack<String> stack;
+    Stack<String> parsingStack;
+    LexicalAnalyser analyser;
 
-    public Parser() {
+    public Parser(String inputFile) {
         try {
-            stack = new Stack();
+            parsingStack = new Stack();
+            analyser = new LexicalAnalyser(inputFile);
             this.grammar = new Grammar("./grm/non_ambiguous_LL1.grm");
             this.firstSet = buildFirstFollowSet("grm/non_ambiguous_LL1.grm.first");
             addTerminalsToFirstSet();
             this.followSet = buildFirstFollowSet("grm/non_ambiguous_LL1.grm.follow");
+            addTerminalsToFollowSet();
             buildParsingTable();
         }
         catch (FileNotFoundException e) {
@@ -22,24 +25,27 @@ public class Parser {
         }
     }
 
-    public boolean parse(String inputFile) throws FileNotFoundException {
+    public boolean parse() {
         boolean error = false;
-        LexicalAnalyser analyser = new LexicalAnalyser(inputFile);
 
-        stack.push("$");
-        stack.push(grammar.startingSymbol);
+        parsingStack.push("$");
+        parsingStack.push(grammar.startingSymbol);
 
         Token nextToken = analyser.nextToken();
-        while (!stack.peek().equals("$") && nextToken != null) {
-            String top = stack.peek();
+        while (!parsingStack.peek().equals("$") && nextToken != null) {
+            String top = parsingStack.peek();
+
+            if (nextToken.getType() == TokenType.BLOCK_COMMENT || nextToken.getType() == TokenType.INLINE_COMMENT) {
+                nextToken = analyser.nextToken();
+            }
 
             if (grammar.terminals.contains(top)) {
                 if (top.equals(nextToken.getType().toString()) || top.equals(nextToken.lexeme)) {
-                    stack.pop();
+                    parsingStack.pop();
                     nextToken = analyser.nextToken();
                 }
                 else {
-                    // TODO: function skipErrors()
+                    skipError(nextToken);
                     error = true;
                 }
             }
@@ -51,17 +57,17 @@ public class Parser {
 
                 if (production != null) {
                     System.out.println(production);
-                    stack.pop();
+                    parsingStack.pop();
                     inverseRHSMultiplePush(production);
                 }
                 else {
-                    // TODO: function skipErrors()
+                    skipError(nextToken);
                     error = true;
                 }
             }
         }
 
-        if (!stack.peek().equals("$") || error == true) {
+        if (!parsingStack.peek().equals("$") || error == true) {
             return false;
         }
         else {
@@ -69,12 +75,32 @@ public class Parser {
         }
     }
 
+    private void skipError(Token nextToken) {
+       System.err.println("Syntax error at line " + nextToken.location + ": expected \"" + parsingStack.peek() +
+               "\", got \"" + nextToken.lexeme+"\'");
+       ArrayList<String> follow = followSet.get(parsingStack.peek());
+       ArrayList<String> first = firstSet.get(parsingStack.peek());
+
+       if ((!follow.contains(nextToken.lexeme) && !follow.contains(nextToken.getType().toString()))) {
+           parsingStack.pop();
+       }
+       else {
+           while (!(first.contains(nextToken.getType().toString()) &&
+                   !first.contains(nextToken.lexeme)) ||
+                   (first.contains("EPSILON")
+                           && (!follow.contains(nextToken.getType().toString())
+                           && !follow.contains(nextToken.lexeme)))) {
+               nextToken = analyser.nextToken();
+           }
+       }
+    }
+
     private void inverseRHSMultiplePush(Production production) {
         ArrayList<String> rhs = production.rhs;
         for (int i = rhs.size() - 1; i >= 0 ; i--) {
             String symbol = rhs.get(i);
             if (!symbol.equals("EPSILON")) {
-                stack.push(symbol);
+                parsingStack.push(symbol);
             }
         }
     }
@@ -89,6 +115,13 @@ public class Parser {
         ArrayList<String> list = new ArrayList<>();
         list.add("EPSILON");
         firstSet.put("EPSILON", list);
+    }
+
+    private void addTerminalsToFollowSet() {
+        for (String terminal:grammar.terminals) {
+            followSet.put(terminal, new ArrayList<>());
+        }
+        followSet.put("EP", new ArrayList<>());
     }
 
     private HashMap<String, ArrayList<String>> buildFirstFollowSet(String file)
@@ -198,18 +231,11 @@ public class Parser {
 
 
             for (Map.Entry row:parsingTable.entrySet()) {
-                boolean allNull = true;
                 writer.write(row.getKey().toString()+"\t");
 
                 for (String header:grammar.terminals) {
                     HashMap<String, Production> values = (HashMap<String, Production>)row.getValue();
                     writer.write(values.get(header)+"\t");
-                    if (values.get(header)!=null) {
-                        allNull = false;
-                    }
-                }
-                if (allNull) {
-                    System.out.println(row.getKey()+" all null");
                 }
                 writer.write("\n");
             }
