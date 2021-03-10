@@ -7,6 +7,7 @@ public class Parser {
     HashMap<SyntaxSymbol, ArrayList<SyntaxSymbol>> followSet;
     HashMap<SyntaxSymbol, HashMap<SyntaxSymbol, Production>> parsingTable;
     Stack<SyntaxSymbol> parsingStack;
+    Stack<SemanticSymbol> semanticStack;
     LexicalAnalyser analyser;
 
     public Parser(String inputFile) {
@@ -80,17 +81,20 @@ public class Parser {
                "\", got \"" + nextToken.lexeme+"\'");
        ArrayList<SyntaxSymbol> follow = followSet.get(parsingStack.peek());
        ArrayList<SyntaxSymbol> first = firstSet.get(parsingStack.peek());
+       SyntaxSymbol lexeme = new SyntaxSymbol(nextToken.lexeme, SyntaxSymbolType.TERMINAL);
+       SyntaxSymbol type = new SyntaxSymbol(nextToken.getType().toString(), SyntaxSymbolType.TERMINAL);
 
-       if ((!follow.contains(nextToken.lexeme) && !follow.contains(nextToken.getType().toString()))) {
+       if (!follow.contains(lexeme) && !follow.contains(type)) {
            parsingStack.pop();
        }
        else {
-           while (!(first.contains(nextToken.getType().toString()) &&
-                   !first.contains(nextToken.lexeme)) ||
-                   (first.contains("EPSILON")
-                           && (!follow.contains(nextToken.getType().toString())
-                           && !follow.contains(nextToken.lexeme)))) {
+           while ((!first.contains(lexeme) && !first.contains(type)) ||
+                   (first.contains(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON)) &&
+                           !follow.contains(lexeme) &&
+                           !follow.contains(type))) {
                nextToken = analyser.nextToken();
+               lexeme = new SyntaxSymbol(nextToken.lexeme, SyntaxSymbolType.TERMINAL);
+               type = new SyntaxSymbol(nextToken.getType().toString(), SyntaxSymbolType.TERMINAL);
            }
        }
     }

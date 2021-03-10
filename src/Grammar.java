@@ -46,6 +46,10 @@ public class Grammar {
                     }
                     production.addRHS(syntaxSymbol);
                 }
+                else if (symbol.contains("#")) {
+                    symbol = symbol.substring(1, symbol.length() - 1);
+                    SemanticSymbol semanticSymbol = new SemanticSymbol(symbol);
+                }
                 else if (symbol.contains("::=")) {
                     lhs = false;
                 }
