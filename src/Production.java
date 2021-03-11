@@ -2,21 +2,21 @@ import java.util.ArrayList;
 
 public class Production {
     SyntaxSymbol lhs;
-    ArrayList<SyntaxSymbol> rhs;
+    ArrayList<Symbol> rhs;
 
     protected Production(SyntaxSymbol lhs) {
         this.lhs = lhs;
         rhs = new ArrayList<>();
     }
 
-    protected void addRHS(SyntaxSymbol symbol) {
+    protected void addRHS(Symbol symbol) {
         rhs.add(symbol);
     }
 
     @Override
     public String toString() {
-        String result = lhs.toString() + " -> "; // "<"+lhs+"> -> ";
-        for (SyntaxSymbol symbol:rhs) {
+        String result = lhs.toString() + " -> ";
+        for (Symbol symbol:rhs) {
             result += symbol.toString() + " ";
         }
         return result;

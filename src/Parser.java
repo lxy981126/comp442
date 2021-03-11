@@ -6,15 +6,16 @@ public class Parser {
     HashMap<SyntaxSymbol, ArrayList<SyntaxSymbol>> firstSet;
     HashMap<SyntaxSymbol, ArrayList<SyntaxSymbol>> followSet;
     HashMap<SyntaxSymbol, HashMap<SyntaxSymbol, Production>> parsingTable;
-    Stack<SyntaxSymbol> parsingStack;
-    Stack<SemanticSymbol> semanticStack;
+    Stack<Symbol> parsingStack;
+    Stack<ASTNode> semanticStack;
     LexicalAnalyser analyser;
 
     public Parser(String inputFile) {
         try {
-            parsingStack = new Stack();
+            parsingStack = new Stack<>();
+            semanticStack = new Stack<>();
             analyser = new LexicalAnalyser(inputFile);
-            this.grammar = new Grammar("./grm/non_ambiguous_LL1.grm");
+            this.grammar = new Grammar("./grm/LL1_sdt.grm");
             this.firstSet = buildFirstFollowSet("grm/non_ambiguous_LL1.grm.first");
             addTerminalsToFirstSet();
             this.followSet = buildFirstFollowSet("grm/non_ambiguous_LL1.grm.follow");
@@ -33,42 +34,53 @@ public class Parser {
         parsingStack.push(grammar.startingSymbol);
 
         Token nextToken = analyser.nextToken();
-        while (parsingStack.peek().type != SyntaxSymbolType.END_OF_FILE && nextToken != null) {
-            SyntaxSymbol top = parsingStack.peek();
+        while ((parsingStack.peek() instanceof SemanticSymbol ||
+                ((SyntaxSymbol) parsingStack.peek()).type != SyntaxSymbolType.END_OF_FILE)) {
+            Symbol top = parsingStack.peek();
 
-            if (nextToken.getType() == TokenType.BLOCK_COMMENT || nextToken.getType() == TokenType.INLINE_COMMENT) {
-                nextToken = analyser.nextToken();
+            if (top instanceof SemanticSymbol) {
+                SemanticAction.performAction(semanticStack, (SemanticSymbol) top, nextToken);
+                parsingStack.pop();
             }
-
-            if (top.type == SyntaxSymbolType.TERMINAL) {
-                if (top.equals(nextToken)) {
-                    parsingStack.pop();
+            else if (nextToken != null) {
+                if (nextToken.getType() == TokenType.BLOCK_COMMENT || nextToken.getType() == TokenType.INLINE_COMMENT) {
                     nextToken = analyser.nextToken();
                 }
-                else {
-                    skipError(nextToken);
-                    error = true;
-                }
-            }
-            else {
-                HashMap<SyntaxSymbol, Production> row = parsingTable.get(top);
-                SyntaxSymbol lexeme = new SyntaxSymbol(nextToken.lexeme, SyntaxSymbolType.TERMINAL);
-                SyntaxSymbol type = new SyntaxSymbol(nextToken.getType().toString(), SyntaxSymbolType.TERMINAL);
 
-                Production production = row.get(lexeme) == null ? row.get(type) : row.get(lexeme);
-                if (production != null) {
-                    System.out.println(production);
-                    parsingStack.pop();
-                    inverseRHSMultiplePush(production);
+                SyntaxSymbol topSyntax = (SyntaxSymbol) top;
+                if (topSyntax.type == SyntaxSymbolType.TERMINAL) {
+                    if (topSyntax.equals(nextToken)) {
+                        parsingStack.pop();
+                        nextToken = analyser.nextToken();
+                    }
+                    else {
+                        skipError(nextToken);
+                        error = true;
+                    }
                 }
                 else {
-                    skipError(nextToken);
-                    error = true;
+                    HashMap<SyntaxSymbol, Production> row = parsingTable.get(topSyntax);
+                    SyntaxSymbol lexeme = new SyntaxSymbol(nextToken.lexeme, SyntaxSymbolType.TERMINAL);
+                    SyntaxSymbol type = new SyntaxSymbol(nextToken.getType().toString(), SyntaxSymbolType.TERMINAL);
+
+                    Production production = row.get(lexeme) == null ? row.get(type) : row.get(lexeme);
+                    if (production != null) {
+                        System.out.println(production);
+                        parsingStack.pop();
+                        inverseRHSMultiplePush(production);
+                    }
+                    else {
+                        skipError(nextToken);
+                        error = true;
+                    }
                 }
             }
         }
 
-        if (parsingStack.peek().type != SyntaxSymbolType.END_OF_FILE || error == true) {
+        System.out.println(semanticStack.peek().toString());
+        if ((parsingStack.peek() instanceof SyntaxSymbol &&
+                ((SyntaxSymbol) parsingStack.peek()).type != SyntaxSymbolType.END_OF_FILE) ||
+                error == true) {
             return false;
         }
         else {
@@ -100,9 +112,11 @@ public class Parser {
     }
 
     private void inverseRHSMultiplePush(Production production) {
-        ArrayList<SyntaxSymbol> rhs = production.rhs;
+        ArrayList<Symbol> rhs = production.rhs;
+
         for (int i = rhs.size() - 1; i >= 0 ; i--) {
-            SyntaxSymbol symbol = rhs.get(i);
+            Symbol symbol = rhs.get(i);
+
             if (!symbol.equals(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON))) {
                 parsingStack.push(symbol);
             }
@@ -213,21 +227,23 @@ public class Parser {
         ArrayList<SyntaxSymbol> first = new ArrayList<>();
 
         int i = 0;
-        SyntaxSymbol rhsSymbol;
-        ArrayList<SyntaxSymbol> firstSetRhsSymbol;
-        boolean epsilon = true;
+        Symbol rhsSymbol;
+        ArrayList<SyntaxSymbol> firstSetRhsSymbol = new ArrayList<>();
 
         do {
             rhsSymbol = production.rhs.get(i);
-            firstSetRhsSymbol = firstSet.get(rhsSymbol);
-            for (SyntaxSymbol symbol:firstSetRhsSymbol) {
-                if (!first.contains(symbol)) {
-                    first.add(symbol);
+
+            if (rhsSymbol instanceof SyntaxSymbol) {
+                firstSetRhsSymbol = firstSet.get(rhsSymbol);
+
+                for (SyntaxSymbol symbol:firstSetRhsSymbol) {
+                    if (!first.contains(symbol)) {
+                        first.add(symbol);
+                    }
                 }
             }
             i++;
-            epsilon = firstSetRhsSymbol.contains(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON));
-        }while (epsilon &&
+        }while (firstSetRhsSymbol.contains(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON)) &&
                 i<production.rhs.size());
         return first;
     }
