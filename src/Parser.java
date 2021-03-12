@@ -9,27 +9,35 @@ public class Parser {
     Stack<Symbol> parsingStack;
     Stack<ASTNode> semanticStack;
     LexicalAnalyser analyser;
+    BufferedWriter errorWriter;
+    String inputFile;
 
     public Parser(String inputFile) {
         try {
+            this.inputFile = inputFile;
+            this.errorWriter = new BufferedWriter
+                    (new FileWriter("out/" + inputFile + ".outsyntaxerrors", false));
             parsingStack = new Stack<>();
             semanticStack = new Stack<>();
-            analyser = new LexicalAnalyser(inputFile);
+            analyser = new LexicalAnalyser(inputFile + ".src");
             this.grammar = new Grammar("./grm/LL1_sdt.grm");
             this.firstSet = buildFirstFollowSet("grm/non_ambiguous_LL1.grm.first");
             addTerminalsToFirstSet();
             this.followSet = buildFirstFollowSet("grm/non_ambiguous_LL1.grm.follow");
             addTerminalsToFollowSet();
             buildParsingTable();
-        }
-        catch (FileNotFoundException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public boolean parse() {
-        boolean error = false;
+    public boolean parse() throws IOException {
+        BufferedWriter derivationWriter = new BufferedWriter
+                (new FileWriter("out/" + inputFile + ".outderivation"));
+        BufferedWriter astWriter = new BufferedWriter
+                (new FileWriter("out/" + inputFile + ".dot"));
 
+        boolean error = false;
         parsingStack.push(new SyntaxSymbol("$", SyntaxSymbolType.END_OF_FILE));
         parsingStack.push(grammar.startingSymbol);
 
@@ -65,7 +73,7 @@ public class Parser {
 
                     Production production = row.get(lexeme) == null ? row.get(type) : row.get(lexeme);
                     if (production != null) {
-                        System.out.println(production);
+                        derivationWriter.write(production.toString() + "\n");
                         parsingStack.pop();
                         inverseRHSMultiplePush(production);
                     }
@@ -77,7 +85,18 @@ public class Parser {
             }
         }
 
-        System.out.println(semanticStack.peek().toString());
+        astWriter.write("graph ast {\n");
+        ASTNode currentNode = semanticStack.empty()? null:semanticStack.peek();
+        while (currentNode != null) {
+            astWriter.write(currentNode.toString());
+            System.out.println(currentNode.toString());
+            semanticStack.pop();
+            currentNode = semanticStack.empty()? null:semanticStack.peek();
+        }
+        astWriter.write("}");
+
+        derivationWriter.close();
+        astWriter.close();
         if ((parsingStack.peek() instanceof SyntaxSymbol &&
                 ((SyntaxSymbol) parsingStack.peek()).type != SyntaxSymbolType.END_OF_FILE) ||
                 error == true) {
@@ -88,9 +107,12 @@ public class Parser {
         }
     }
 
-    private void skipError(Token nextToken) {
-       System.err.println("Syntax error at line " + nextToken.location + ": expected \"" + parsingStack.peek() +
-               "\", got \"" + nextToken.lexeme+"\'");
+    private void skipError(Token nextToken) throws IOException {
+        String errorMessage = "Syntax error at line " + nextToken.location + ": expected \"" + parsingStack.peek() +
+                "\", got \"" + nextToken.lexeme+"\'";
+       System.err.println(errorMessage);
+       errorWriter.write(errorMessage);
+
        ArrayList<SyntaxSymbol> follow = followSet.get(parsingStack.peek());
        ArrayList<SyntaxSymbol> first = firstSet.get(parsingStack.peek());
        SyntaxSymbol lexeme = new SyntaxSymbol(nextToken.lexeme, SyntaxSymbolType.TERMINAL);
@@ -189,6 +211,7 @@ public class Parser {
         ArrayList<Production> productions = grammar.productions;
 
         for (Production production:productions) {
+            boolean allNull = true;
             SyntaxSymbol nonTerminal = production.lhs;
 
             HashMap<SyntaxSymbol, Production> row = parsingTable.get(nonTerminal);
@@ -202,6 +225,7 @@ public class Parser {
             for (SyntaxSymbol terminal:terminals) {
                 if (first.contains(terminal)) {
                     row.put(terminal, production);
+                    allNull = false;
                 }
             }
 
@@ -210,6 +234,7 @@ public class Parser {
                 for (SyntaxSymbol terminal:terminals) {
                     if (follow.contains(terminal)) {
                         row.put(terminal, production);
+                        allNull = false;
                     }
                 }
             }
@@ -218,6 +243,9 @@ public class Parser {
                 if (row.get(terminal) == null) {
                     row.put(terminal, null);
                 }
+            }
+            if (allNull) {
+               System.out.println(nonTerminal.name+" all null");
             }
         }
         outputParsingTableToFile();
@@ -243,14 +271,15 @@ public class Parser {
                 }
             }
             i++;
-        }while (firstSetRhsSymbol.contains(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON)) &&
+        }while ( (rhsSymbol instanceof SemanticSymbol ||
+                firstSetRhsSymbol.contains(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON))) &&
                 i<production.rhs.size());
         return first;
     }
 
     private void outputParsingTableToFile() {
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("out/ParsingTable.tsv"));
+            BufferedWriter writer = new BufferedWriter(new FileWriter("out/test/a2/ParsingTable.tsv"));
 
             writer.write("\t");
             for (SyntaxSymbol header:grammar.terminals) {

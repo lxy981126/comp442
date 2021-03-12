@@ -1,6 +1,8 @@
+import java.io.IOException;
+
 public class Main {
-    public static void main(String[] args) {
-        String inputFile = "test/a2/test.src";
+    public static void main(String[] args) throws IOException {
+        String inputFile = "test/a2/test";
         Parser parser = new Parser(inputFile);
 
         boolean success= parser.parse();

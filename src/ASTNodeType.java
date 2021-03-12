@@ -6,6 +6,7 @@ public enum ASTNodeType {
     ADD_OP("addOp"),
     MULT_OP("multOp"),
     NUM("num"),
+    STRING("str"),
     ID("id"),
     TYPE("type"),
     SIGN("sign"),
@@ -31,21 +32,22 @@ public enum ASTNodeType {
     RETURN_STATEMENT("returnStat"),
     BREAK_STATEMENT("breakStat"),
     CONTINUE_STATEMENT("continueStat"),
-    FUNCTION_ASSIGN_STATEMENT("funcAssignStat"),
 
     MEMBER_DECLARATION("membDecl"),
-
     ARRAY_SIZE_LIST("arraySizeList"),
 
     FUNCTION_DEFINITION_LIST("funcDefList"),
-    FUNCTION_DEFINITION("funcDef"),
     FUNCTION_DECLARATION("funcDecl"),
+    FUNCTION_DEFINITION("funcDef"),
+    FUNCTION_HEAD("funcHead"),
     FUNCTION_BODY("funcBody"),
     INHERIT("inherit"),
 
     CLASS_LIST("classList"),
     CLASS_DECLARATION("classDecl"),
     CLASS_DECLARATION_BODY("classDeclBody"),
+    CLASS_METHOD("classMethod"),
+    METHOD_BODY("methodBody"),
 
     APARAM("aParam"),
     APARAM_LIST("aParamList"),

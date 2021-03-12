@@ -1,12 +1,16 @@
 public class ASTNode {
+    static int idCounter = 0;
     ASTNode parent;
     ASTNode leftmostSibling;
     ASTNode rightSibling;
     ASTNode leftmostChild;
     ASTNodeType type;
     Token token;
+    int id;
 
     ASTNode() {
+        id = idCounter;
+        idCounter++;
         parent = null;
         leftmostSibling = this;
         rightSibling = null;
@@ -15,10 +19,24 @@ public class ASTNode {
         token = null;
     }
 
+    // leaf nodes
     ASTNode(Token token, SemanticSymbol symbol) {
+        id = idCounter;
+        idCounter++;
         this.token = token;
         this.leftmostSibling = this;
+        assignType(symbol);
+    }
 
+    // interior nodes
+    ASTNode(SemanticSymbol symbol) {
+        id = idCounter;
+        idCounter++;
+        this.leftmostSibling = this;
+        assignType(symbol);
+    }
+
+    private void assignType(SemanticSymbol symbol) {
         for (ASTNodeType nodeType:ASTNodeType.values()) {
             boolean equal = symbol.name.equals(nodeType.toString());
             if (equal) {
@@ -60,14 +78,23 @@ public class ASTNode {
         }
     }
 
+    private String getNodeName() {
+        return id + "." + type.toString();
+    }
+
     @Override
     public String toString() {
         String result = "";
-        ASTNode currentChild = leftmostChild;
-        while (currentChild != null) {
-            result += type.toString() + " -- " + currentChild.type.toString() + "\n";
-            result += currentChild.toString();
-            currentChild = currentChild.rightSibling;
+        if (leftmostChild == null) {
+            result = getNodeName() + "\n";
+        }
+        else {
+            ASTNode currentChild = leftmostChild;
+            while (currentChild != null) {
+                result +=  getNodeName() + " -- " + currentChild.getNodeName() + "\n";
+                result += currentChild.toString();
+                currentChild = currentChild.rightSibling;
+            }
         }
         return result;
     }

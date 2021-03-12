@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Stack;
 
 public class SemanticAction {
@@ -20,75 +21,168 @@ public class SemanticAction {
                 symbol.name.equals("continueStat")) {
             stack.push(new ASTNode(token, symbol));
         }
+        else if (symbol.name.equals("program")) {
+            ArrayList<ASTNodeType> types = new ArrayList<>
+                    (Arrays.asList(ASTNodeType.CLASS_LIST, ASTNodeType.FUNCTION_DEFINITION_LIST,
+                            ASTNodeType.FUNCTION_BODY));
+            doAction(stack, symbol, types);
+        }
         else if (symbol.name.equals("classList")) {
             ArrayList<ASTNodeType> listItemType = new ArrayList<>();
             listItemType.add(ASTNodeType.CLASS_DECLARATION);
-            listAction(stack, token, symbol, listItemType);
+            doAction(stack, symbol, listItemType);
+        }
+        else if (symbol.name.equals("classDecl")) {
+            ArrayList<ASTNodeType> type = new ArrayList<>
+                    (Arrays.asList(ASTNodeType.ID, ASTNodeType.INHERIT, ASTNodeType.CLASS_DECLARATION_BODY));
+            doAction(stack, symbol, type);
+        }
+        else if (symbol.name.equals("classDeclBody")) {
+            ArrayList<ASTNodeType> type = new ArrayList<>(Arrays.asList
+                    (ASTNodeType.VISIBILITY, ASTNodeType.MEMBER_DECLARATION));
+            doAction(stack, symbol, type);
+        }
+        else if (symbol.name.equals("classMethod")) {
+            mergeOneNode(stack, symbol, ASTNodeType.ID);
         }
         else if (symbol.name.equals("funcDefList")) {
-            ArrayList<ASTNodeType> listItemType = new ArrayList<>();
-            listItemType.add(ASTNodeType.FUNCTION_DEFINITION);
-            listAction(stack, token, symbol, listItemType);
+            ArrayList<ASTNodeType> listItemType = new ArrayList<>(Arrays.asList(ASTNodeType.FUNCTION_DEFINITION));
+            doAction(stack, symbol, listItemType);
         }
-        else if (symbol.name.equals("statList")) {
-            ArrayList<ASTNodeType> listItemTypes = new ArrayList<>();
-            listItemTypes.add(ASTNodeType.IF_STATEMENT);
-            listItemTypes.add(ASTNodeType.ASSIGN_STATEMENT);
-            listItemTypes.add(ASTNodeType.BREAK_STATEMENT);
-            listItemTypes.add(ASTNodeType.CONTINUE_STATEMENT);
-            listItemTypes.add(ASTNodeType.READ_STATEMENT);
-            listItemTypes.add(ASTNodeType.RETURN_STATEMENT);
-            listItemTypes.add(ASTNodeType.WHILE_STATEMENT);
-            listItemTypes.add(ASTNodeType.FUNCTION_ASSIGN_STATEMENT);
-            listAction(stack, token, symbol, listItemTypes);
+        else if (symbol.name.equals("inherit")) {
+            doAction(stack, symbol, new ArrayList<>(Arrays.asList(ASTNodeType.ID)));
+        }
+        else if (symbol.name.equals("funcDef")) {
+            ArrayList<ASTNodeType> types = new ArrayList<>
+            (Arrays.asList(ASTNodeType.FUNCTION_HEAD, ASTNodeType.FUNCTION_BODY));
+            doAction(stack, symbol, types);
+        }
+        else if (symbol.name.equals("funcHead")) {
+            ArrayList<ASTNodeType> types = new ArrayList<>
+                    (Arrays.asList(ASTNodeType.ID, ASTNodeType.CLASS_METHOD, ASTNodeType.FPARAM_LIST, ASTNodeType.TYPE));
+            doAction(stack, symbol, types);
         }
         else if (symbol.name.equals("funcBody")) {
-            ASTNode funcBody = new ASTNode(token, symbol);
-
-            ASTNode node = stack.empty()? null:stack.peek();
-            while (node != null &&
-                    (node.type == ASTNodeType.VARIABLE_DECLARATION_LIST ||
-                            node.type == ASTNodeType.STATEMENT_LIST)) {
-                funcBody.adoptChild(node);
-                stack.pop();
-                node = stack.peek();
-            }
-
-            stack.push(funcBody);
+            ArrayList<ASTNodeType> types = new ArrayList<>
+                    (Arrays.asList(ASTNodeType.VARIABLE_DECLARATION_LIST, ASTNodeType.STATEMENT_LIST));
+            doAction(stack, symbol, types);
         }
-        else if (symbol.name.equals("program")) {
-            ASTNode program = new ASTNode(token, symbol);
-
-            ASTNode node = stack.empty()? null:stack.peek();
-            while (node != null &&
-                    (node.type == ASTNodeType.CLASS_LIST ||
-                    node.type == ASTNodeType.FUNCTION_DEFINITION_LIST ||
-                    node.type == ASTNodeType.FUNCTION_BODY)) {
-                program.adoptChild(node);
-                stack.pop();
-                node = stack.empty()? null:stack.peek();
-            }
-
-            stack.push(program);
+        else if (symbol.name.equals("membDecl")) {
+            ArrayList<ASTNodeType> types = new ArrayList<>
+                    (Arrays.asList(ASTNodeType.FUNCTION_DECLARATION, ASTNodeType.VARIABLE_DECLARATION));
+            doAction(stack, symbol, types);
+        }
+        else if (symbol.name.equals("funcDecl")) {
+            ArrayList<ASTNodeType> types = new ArrayList<>
+                    (Arrays.asList(ASTNodeType.ID, ASTNodeType.FPARAM_LIST, ASTNodeType.TYPE));
+            doAction(stack, symbol, types);
+        }
+        else if (symbol.name.equals("fParamList")) {
+            ArrayList<ASTNodeType> types = new ArrayList<>(Arrays.asList(ASTNodeType.FPARAM));
+            doAction(stack, symbol, types);
+        }
+        else if (symbol.name.equals("fParam")) {
+            ArrayList<ASTNodeType> types = new ArrayList<>
+                    (Arrays.asList(ASTNodeType.TYPE, ASTNodeType.ID, ASTNodeType.ARRAY_SIZE_LIST));
+            doAction(stack, symbol, types);
+        }
+        else if (symbol.name.equals("methodBody")) {
+            ArrayList<ASTNodeType> types = new ArrayList<>(Arrays.asList(ASTNodeType.VARIABLE_DECLARATION_LIST));
+            doAction(stack, symbol, types);
+        }
+        else if (symbol.name.equals("varDeclList")) {
+            ArrayList<ASTNodeType> types = new ArrayList<>(Arrays.asList(ASTNodeType.VARIABLE_DECLARATION));
+            doAction(stack, symbol, types);
+        }
+        else if (symbol.name.equals("varDecl")) {
+            ArrayList<ASTNodeType> types = new ArrayList<>
+                    (Arrays.asList(ASTNodeType.TYPE, ASTNodeType.ID, ASTNodeType.ARRAY_SIZE_LIST));
+            doAction(stack, symbol, types);
+        }
+        else if (symbol.name.equals("arraySizeList")) {
+            ArrayList<ASTNodeType> types = new ArrayList<>(Arrays.asList(ASTNodeType.NUM));
+            doAction(stack, symbol, types);
+        }
+        else if (symbol.name.equals("var")) {
+            ArrayList<ASTNodeType> types = new ArrayList<>(Arrays.asList(ASTNodeType.ID, ASTNodeType.INDEX_LIST));
+            doAction(stack, symbol, types);
+        }
+        else if (symbol.name.equals("indexList")) {
+            ArrayList<ASTNodeType> types = new ArrayList<>(Arrays.asList(ASTNodeType.EXPRESSION));
+            doAction(stack, symbol, types);
+        }
+        else if (symbol.name.equals("statBlock")) {
+            ArrayList<ASTNodeType> types = new ArrayList<>(Arrays.asList(ASTNodeType.STATEMENT_LIST,
+                    ASTNodeType.IF_STATEMENT, ASTNodeType.ASSIGN_STATEMENT, ASTNodeType.BREAK_STATEMENT,
+                    ASTNodeType.CONTINUE_STATEMENT, ASTNodeType.READ_STATEMENT, ASTNodeType.RETURN_STATEMENT,
+                    ASTNodeType.WHILE_STATEMENT, ASTNodeType.ASSIGN_STATEMENT));
+            doAction(stack, symbol, types);
+        }
+        else if (symbol.name.equals("statList")) {
+            ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
+                    Arrays.asList(ASTNodeType.IF_STATEMENT, ASTNodeType.ASSIGN_STATEMENT, ASTNodeType.BREAK_STATEMENT,
+                            ASTNodeType.CONTINUE_STATEMENT, ASTNodeType.READ_STATEMENT, ASTNodeType.RETURN_STATEMENT,
+                            ASTNodeType.WHILE_STATEMENT, ASTNodeType.ASSIGN_STATEMENT));
+            doAction(stack, symbol, listItemTypes);
+        }
+        else if (symbol.name.equals("ifStat")) {
+            ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
+                    Arrays.asList(ASTNodeType.EXPRESSION, ASTNodeType.STATEMENT_BLOCK));
+            doAction(stack, symbol, listItemTypes);
+        }
+        else if (symbol.name.equals("whileStat")) {
+            ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
+                    Arrays.asList(ASTNodeType.EXPRESSION, ASTNodeType.STATEMENT_BLOCK));
+            doAction(stack, symbol, listItemTypes);
+        }
+        else if (symbol.name.equals("readStat")) {
+            ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
+                    Arrays.asList(ASTNodeType.VARIABLE));
+            doAction(stack, symbol, listItemTypes);
+        }
+        else if (symbol.name.equals("writeStat") || symbol.name.equals("returnStat")) {
+            ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
+                    Arrays.asList(ASTNodeType.EXPRESSION));
+            doAction(stack, symbol, listItemTypes);
+        }
+        else if (symbol.name.equals("assignStat")) {
+            ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
+                    Arrays.asList(ASTNodeType.ID, ASTNodeType.INDEX_LIST, ASTNodeType.APARAM_LIST, ASTNodeType.ADD_OP,
+                    ASTNodeType.EXPRESSION));
+            doAction(stack, symbol, listItemTypes);
+        }
+        else if (symbol.name.equals("factor")) {
+            ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
+                    Arrays.asList(ASTNodeType.NUM, ASTNodeType.STRING, ASTNodeType.EXPRESSION, ASTNodeType.NOT,
+                    ASTNodeType.SIGN));
+            doAction(stack, symbol, listItemTypes);
         }
     }
 
-    private static void listAction(Stack<ASTNode> stack,
-                                   Token token,
+    private static void mergeOneNode(Stack<ASTNode> stack, SemanticSymbol symbol, ASTNodeType type) {
+        ASTNode parent = new ASTNode(symbol);
+
+        ASTNode child = stack.empty()? null:stack.peek();
+        if (child.type == type) {
+            parent.adoptChild(child);
+        }
+        stack.push(parent);
+    }
+
+    private static void doAction(Stack<ASTNode> stack,
                                    SemanticSymbol symbol,
                                    ArrayList<ASTNodeType> listItemTypes) {
-        ASTNode listNode = new ASTNode(token, symbol);
+        ASTNode listNode = new ASTNode(symbol);
 
         ASTNode child = stack.empty()? null:stack.peek();
         while (child != null && listItemTypes.contains(child.type)) {
             listNode.adoptChild(child);
             stack.pop();
-            child = stack.peek();
+            child = stack.empty()? null:stack.peek();
         }
 
         stack.push(listNode);
     }
-
 
 
 }
