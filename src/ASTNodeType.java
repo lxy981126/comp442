@@ -10,8 +10,10 @@ public enum ASTNodeType {
     ID("id"),
     TYPE("type"),
     SIGN("sign"),
-    VISIBILITY("visibility"),
+    PRIVATE("private"),
+    PUBLIC("public"),
 
+    VISIBILITY("visibility"),
     INDEX_LIST("indexList"),
     FACTOR("factor"),
     TERM("term"),
