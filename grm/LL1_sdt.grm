@@ -3,13 +3,13 @@
 <Prog> ::= <ClassDecl> #classList# <FuncDef> #funcDefList# 'main' <FuncBody> #program#
 
 <ClassDecl> ::= 'class' #id# 'id' <Inherit> '{' <ClassDeclBody> '}' ';' #classDecl# <ClassDecl>
-<ClassDecl> ::= EPSILON #classDecl#
+<ClassDecl> ::= EPSILON
 
 <ClassDeclBody> ::= <Visibility> <MemberDecl> #classDeclBody# <ClassDeclBody>
-<ClassDeclBody> ::= EPSILON #classDeclBody#
+<ClassDeclBody> ::= EPSILON
 
 <ClassMethod> ::= '::' #id# 'id' #classMethod#
-<ClassMethod> ::= EPSILON ##
+<ClassMethod> ::= EPSILON
 
 <Inherit> ::= 'inherits' #id# 'id' <NestedId> #inherit#
 <Inherit> ::= EPSILON  #inherit#
@@ -30,12 +30,12 @@
 <FuncDeclTail> ::= 'void' #type#
 
 <FParams> ::= <Type> #id# 'id' <ArraySizeRept> #arraySizeList# #fParam# <FParamsTail> #fParamList#
-<FParams> ::= EPSILON #fParamList#
+<FParams> ::= EPSILON
 <FParamsTail> ::= ',' <Type> #id# 'id' <ArraySizeRept> #arraySizeList# #fParam# <FParamsTail>
 <FParamsTail> ::= EPSILON
 
 <MethodBodyVar> ::= 'var' '{' <VarDeclRep> #varDeclList# '}' #methodBody#
-<MethodBodyVar> ::= EPSILON #methodBody#
+<MethodBodyVar> ::= EPSILON
 
 <VarDeclRep> ::= <VarDecl> <VarDeclRep>
 <VarDeclRep> ::= EPSILON
@@ -92,7 +92,7 @@
 <Factor> ::= <Sign> <Factor>
 <Factor> ::= 'qmark' '[' <Expr> ':' <Expr> ':' <Expr> ']' #factor#
 
-<FuncOrVar> ::= #id# 'id' <FuncOrVarIdnest>
+<FuncOrVar> ::= #id# 'id' <FuncOrVarIdnest> #funcOrVar#
 <FuncOrVarIdnest> ::= <IndiceRep> #indexList# <FuncOrVarIdnestTail>
 <FuncOrVarIdnest> ::= '(' <AParams> ')' <FuncOrVarIdnestTail>
 <FuncOrVarIdnestTail> ::= '.' #id# 'id' <FuncOrVarIdnest>
@@ -116,8 +116,8 @@
 <TermTail> ::= EPSILON
 
 <Visibility> ::= #public# 'public' #visibility#
-<Visibility> ::= #private# 'private'
-<Visibility> ::= EPSILON #visibility#
+<Visibility> ::= #private# 'private' #visibility#
+<Visibility> ::= EPSILON
 
 <Type> ::= #type# 'integer'
 <Type> ::= #type# 'float'
@@ -125,7 +125,7 @@
 <Type> ::= #type# 'id'
 
 <IntNum> ::= #num# 'intnum'
-<IntNum> ::= #num# EPSILON
+<IntNum> ::= EPSILON
 
 <Sign> ::= #sign# '+'
 <Sign> ::= #sign# '-'
@@ -145,6 +145,6 @@
 <AddOp> ::= #addOp# '-'
 <AddOp> ::= #addOp# 'or'
 
-<AssignOp> ::= 'assign'
+<AssignOp> ::= #assignOp# 'assign'
 
 

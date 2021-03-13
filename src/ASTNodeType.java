@@ -2,6 +2,7 @@ public enum ASTNodeType {
     // leaf
     NULL("null"),
     NOT("not"),
+    ASSIGN_OP("assginOp"),
     REL_OP("relOp"),
     ADD_OP("addOp"),
     MULT_OP("multOp"),
@@ -16,6 +17,7 @@ public enum ASTNodeType {
     VISIBILITY("visibility"),
     INDEX_LIST("indexList"),
     FACTOR("factor"),
+    FUNCTION_OR_VARIABLE("funcOrVar"),
     TERM("term"),
     ARITHMETIC_EXPRESSION("arithExpr"),
     EXPRESSION("expr"),
