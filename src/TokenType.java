@@ -55,7 +55,8 @@ public enum TokenType {
     INVALID_NUMBER("invalidnum"),
     INVALID_STRING("invalidstr"),
     INVALID_COMMENT("invalidcomment"),
-    INVALID_IDENTIFIER("invalidid");
+    INVALID_IDENTIFIER("invalidid"),
+    END_OF_FILE("$");
 
     private String name;
     private TokenType(String name) {

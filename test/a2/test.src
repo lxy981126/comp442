@@ -1,71 +1,153 @@
-main
+func returnString(QUADRATIC ndArray [][], string sizedArray [2]) : string
 {
-    a.v = 1;
+    var {
+        integer i;
+        integer intNdArray [][];
+        string strArray [2];
+    }
+    returnArray(1);
+    returnString(intNdArray, strArray);
+    returnInteger(returnArray(1));
+
+    while(i>0)
+    {
+    };
+
+    while(i<1)
+    {
+        read(strArray);
+    };
+
+    while(i>=3)
+    {
+        if (arr[j] > arr[j+1]) then
+        {
+            i = 2;
+            break;
+        }
+        else
+        {
+            continue;
+        };
+    };
+
+    return ("returned");
 }
+
+func returnInteger(string i) : string
+{
+    var {
+         integer a;
+         integer b;
+         integer c;
+         integer d;
+    }
+    a = a*b;
+    b = a+b*c/4;
+    c = (a+b)*c/4;
+    d = ((a + b.a) * c.b() + (-c))/4;
+  return (1);
+}
+
+func returnArray(integer a) : string
+{
+    var {
+        integer i;
+        integer j;
+        integer k;
+        integer l;
+        integer m;
+        integer n;
+    }
+
+    i(j).k();
+    i.j[k] = 5;
+    i[j].k = 6;
+    i[j].k[l] = 7;
+    i.j[k][l] = 8;
+    i[j][k].l = 9;
+    i[j][k].l[m][n] = 10;
+
+    return (integer[2]);
+}
+
+func noVarBlock(integer a) : string
+{
+
+}
+
+func emptyVarBlock(integer a) : string
+{
+    var
+    {}
+}
+
+main{}
+
 /*
     classes
     --------------------------------------
-| | no class declaration
+|X| no class declaration
 | | class declaration
-|X| multiple class declarations
+| | multiple class declarations
 |X| no data member declaration
-|X| data member declaration
-|X| multiple data member declaration
-| | no member function declaration
-|X| member function declaration
-|X| multiple member function declaration
-| | no member
+| | data member declaration
+| | multiple data member declaration
+|X| no member function declaration
+| | member function declaration
+| | multiple member function declaration
+|X| no member
 |X| no inherited class
-|X| one inherited class
+| | one inherited class
 | | multiple inherited classes
-|X| private member specifier
-|X| public member specifier
-| | absence of member specifier
+| | private member specifier
+| | public member specifier
+|X| absence of member specifier
 
     functions: definitions
     --------------------------------------
-| | no main function definition (not allowed)
-|X| main function definition
+|X| no main function definition (not allowed)
+| | main function definition
 | | multiple main function definitions (not allowed)
-|X| no free function definition
-| | free function definition
-| | multiple free function definitions
+| | no free function definition
+|X| free function definition
+|X| multiple free function definitions
 | | no member function definition
-|X| member function definition
-|X| multiple member function definitions
+| | member function definition
+| | multiple member function definitions
 | | return type: void
-| | return type: integer
-|X| return type: float
-| | return type: string
-|X| return type: id
-| | return type: array (not allowed)
+|X| return type: integer
+| | return type: float
+|X| return type: string
+| | return type: id
+|X| return type: array (not allowed)
 
 
     functions: formal parameters
     --------------------------------------
-| | type: integer
-|X| type: float
-| | type: string
-| | type: id
+|X| type: integer
+| | type: float
+|X| type: string
+|X| type: id
 | | type: 1-dim array
-| | type: n-dim array
-| | type: array (with size)
-| | type: array (without size)
+|X| type: n-dim array
+|X| type: array (with size)
+|X| type: array (without size)
 
     functions: calls
     --------------------------------------
-| | free function call
-|X| member function call
+|X| free function call
+| | member function call
 | | parameters:0
 |X| parameters:1
 |X| parameters:n
 | | array parameter - 1-dim
-| | array parameter - n-dim
-| | array parameter - with size
-| | array parameter - without size
-| | function call as statement
+|X| array parameter - n-dim
+|X| array parameter - with size
+|X| array parameter - without size
+|X| function call as statement
 |X| function call as expression factor
-| | expression as parameter
+|X| expression as parameter
 
     variable declaration
     --------------------------------------
@@ -74,17 +156,17 @@ main
 | | type: string
 |X| type: id
 | | type: 1-dim array
-| | type: n-dim array
-| | type: array (with size)
-| | type: array (without size)
+|X| type: n-dim array
+|X| type: array (with size)
+|X| type: array (without size)
 
     function body: local variable declaration block
     --------------------------------------
-| | no local variable declarations block
+|X| no local variable declarations block
 |X| local variable declaration block
 | | multiple local variable declarations block (not allowed)
-| | no variables in block
-|X| 1 variable declared in block
+|X| no variables in block
+| | 1 variable declared in block
 |X| multiple variables declared in block
 
     function body: statements
@@ -94,32 +176,32 @@ main
 |X| n statements
 | | if statement
 | | if: empty then or else blocks
-| | if: 1-statement then or else blocks
+|X| if: 1-statement then or else blocks
 | | if: n-statements then or else blocks
-|X| while statement
-| | while: empty block
-| | while: 1-statement block
-|X| while: n-statement block
-| | read(<variable>) statement
-|X| write(<expr>) statement
-|X| return(<expr>) statement
-| | break statement
-| | continue statement
+| | while statement
+|X| while: empty block
+|X| while: 1-statement block
+| | while: n-statement block
+|X| read(<variable>) statement
+| | write(<expr>) statement
+| | return(<expr>) statement
+|X| break statement
+|X| continue statement
 |X| assignment statement
 
     variable + idnest
     --------------------------------------
-|X| id
-|X| id.id
-|X| id.id(id)
+| | id
+| | id.id
+| | id.id(id)
 | | id(id).id
-| | id(id).id()
-| | id.id[id]
-| | id[id].id
-| | id[id].id[id]
-| | id.id[id][id]
-| | id[id][id].id
-| | id[id][id].id[id][id]
+|X| id(id).id()
+|X| id.id[id]
+|X| id[id].id
+|X| id[id].id[id]
+|X| id.id[id][id]
+|X| id[id][id].id
+|X| id[id][id].id[id][id]
 | | id(id).id[id]
 | | id(id).id[id][id]
 | | expression as array index
@@ -128,16 +210,16 @@ main
     --------------------------------------
 | | single variable
 | | involving addop
-| | involving multop
+|X| involving multop
 | | involving relop
-|X| involving addop + multop
+| | involving addop + multop
 | | involving multop + relop
-| | involving addop + multop + relop
-| | involving parentheses
-| | involving nested parenhteses
+|X| involving addop + multop + relop
+|X| involving parentheses
+|X| involving nested parenhteses
 | | involving ternary operator
 | | involving not
-| | involving sign
+|X| involving sign
 | | involving literals
 |X| involving variable + idnest
 |X| involving function calls

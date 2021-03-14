@@ -57,6 +57,10 @@ public class LexicalAnalyser {
                 }
                 next = reader.read();
             }
+
+            if (next == -1 && token == null) {
+                token = new Token(TokenType.END_OF_FILE, "$", lineCounter);
+            }
         }catch (IOException e){
             e.printStackTrace();
         }

@@ -35,6 +35,8 @@ public class Parser {
         BufferedWriter derivationWriter = new BufferedWriter
                 (new FileWriter("out/" + inputFile + ".outderivation"));
         BufferedWriter astWriter = new BufferedWriter
+                (new FileWriter("out/" + inputFile + ".outast"));
+        BufferedWriter dotWriter = new BufferedWriter
                 (new FileWriter("out/" + inputFile + ".dot"));
 
         boolean error = false;
@@ -50,7 +52,7 @@ public class Parser {
                 SemanticAction.performAction(semanticStack, (SemanticSymbol) top, nextToken);
                 parsingStack.pop();
             }
-            else if (nextToken != null) {
+            else {
                 if (nextToken.getType() == TokenType.BLOCK_COMMENT || nextToken.getType() == TokenType.INLINE_COMMENT) {
                     nextToken = analyser.nextToken();
                 }
@@ -62,7 +64,7 @@ public class Parser {
                         nextToken = analyser.nextToken();
                     }
                     else {
-                        skipError(nextToken);
+                        nextToken = skipError(nextToken);
                         error = true;
                     }
                 }
@@ -78,7 +80,7 @@ public class Parser {
                         inverseRHSMultiplePush(production);
                     }
                     else {
-                        skipError(nextToken);
+                        nextToken = skipError(nextToken);
                         error = true;
                     }
                 }
@@ -86,19 +88,23 @@ public class Parser {
         }
 
         astWriter.write("graph ast {\n");
+        dotWriter.write("graph ast {\n");
         ASTNode currentNode = semanticStack.empty()? null:semanticStack.peek();
         while (currentNode != null) {
             astWriter.write(currentNode.toString());
-            System.out.println(currentNode.toString());
+            dotWriter.write(currentNode.toString());
             semanticStack.pop();
             currentNode = semanticStack.empty()? null:semanticStack.peek();
         }
         astWriter.write("}");
+        dotWriter.write("}");
 
         derivationWriter.close();
         astWriter.close();
-        if ((parsingStack.peek() instanceof SyntaxSymbol &&
-                ((SyntaxSymbol) parsingStack.peek()).type != SyntaxSymbolType.END_OF_FILE) ||
+        dotWriter.close();
+
+        if (!(parsingStack.peek() instanceof SyntaxSymbol &&
+                ((SyntaxSymbol) parsingStack.peek()).type == SyntaxSymbolType.END_OF_FILE) ||
                 error == true) {
             return false;
         }
@@ -107,30 +113,32 @@ public class Parser {
         }
     }
 
-    private void skipError(Token nextToken) throws IOException {
+    private Token skipError(Token nextToken) throws IOException {
         String errorMessage = "Syntax error at line " + nextToken.location + ": expected \"" + parsingStack.peek() +
-                "\", got \"" + nextToken.lexeme+"\'";
-       System.err.println(errorMessage);
+                "\", got \"" + nextToken.getType() + ": " + nextToken.lexeme + "\"\n";
+       System.err.print(errorMessage);
        errorWriter.write(errorMessage);
+       errorWriter.flush();
 
        ArrayList<SyntaxSymbol> follow = followSet.get(parsingStack.peek());
        ArrayList<SyntaxSymbol> first = firstSet.get(parsingStack.peek());
        SyntaxSymbol lexeme = new SyntaxSymbol(nextToken.lexeme, SyntaxSymbolType.TERMINAL);
        SyntaxSymbol type = new SyntaxSymbol(nextToken.getType().toString(), SyntaxSymbolType.TERMINAL);
 
-       if (!follow.contains(lexeme) && !follow.contains(type)) {
+       if (nextToken.getType() == TokenType.END_OF_FILE || (follow.contains(lexeme) || follow.contains(type))) {
            parsingStack.pop();
        }
        else {
            while ((!first.contains(lexeme) && !first.contains(type)) ||
-                   (first.contains(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON)) &&
+                   (first.contains(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON))) &&
                            !follow.contains(lexeme) &&
-                           !follow.contains(type))) {
+                           !follow.contains(type)) {
                nextToken = analyser.nextToken();
                lexeme = new SyntaxSymbol(nextToken.lexeme, SyntaxSymbolType.TERMINAL);
                type = new SyntaxSymbol(nextToken.getType().toString(), SyntaxSymbolType.TERMINAL);
            }
        }
+       return nextToken;
     }
 
     private void inverseRHSMultiplePush(Production production) {
@@ -160,7 +168,7 @@ public class Parser {
 
     private void addTerminalsToFollowSet() {
         for (SyntaxSymbol terminal:grammar.terminals) {
-            followSet.put(terminal, new ArrayList<>());
+            followSet.put(terminal, new ArrayList<>(Arrays.asList(new SyntaxSymbol(";", SyntaxSymbolType.TERMINAL))));
         }
         followSet.put(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON), new ArrayList<>());
     }
