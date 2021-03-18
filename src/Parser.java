@@ -129,10 +129,11 @@ public class Parser {
            parsingStack.pop();
        }
        else {
-           while ((!first.contains(lexeme) && !first.contains(type)) ||
-                   (first.contains(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON))) &&
-                           !follow.contains(lexeme) &&
-                           !follow.contains(type)) {
+           while (nextToken.getType() != TokenType.END_OF_FILE &&
+                   ((!first.contains(lexeme) && !first.contains(type)) ||
+                           (first.contains(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON))) &&
+                                   !follow.contains(lexeme) &&
+                                   !follow.contains(type))) {
                nextToken = analyser.nextToken();
                lexeme = new SyntaxSymbol(nextToken.lexeme, SyntaxSymbolType.TERMINAL);
                type = new SyntaxSymbol(nextToken.getType().toString(), SyntaxSymbolType.TERMINAL);
@@ -201,6 +202,9 @@ public class Parser {
                     if (terminalName.contains("EPSILON"))
                     {
                         arrayToAdd.add(new SyntaxSymbol("EPSILON", SyntaxSymbolType.EPSILON));
+                    }
+                    else if (terminalName.contains("$")) {
+                        arrayToAdd.add(new SyntaxSymbol("$", SyntaxSymbolType.END_OF_FILE));
                     }
                     else {
                         terminalName = terminalName.substring(1, terminalName.length() - 1);

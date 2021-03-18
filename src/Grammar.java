@@ -57,6 +57,9 @@ public class Grammar {
                 else if (symbol.contains("EPSILON")) {
                     production.addRHS(new SyntaxSymbol(symbol, SyntaxSymbolType.EPSILON));
                 }
+                else if (symbol.contains("$")) {
+                    production.addRHS(new SyntaxSymbol("$", SyntaxSymbolType.END_OF_FILE));
+                }
             }
 
             if (production != null) {

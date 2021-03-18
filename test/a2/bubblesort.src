@@ -5,7 +5,7 @@ func bubbleSort(integer arr[], integer size) : void
   {
     integer n;
     integer i;
-    integer j;
+    integer j
     integer temp; 
   }
   n = size;

@@ -1,4 +1,4 @@
-<START> ::= <Prog>
+<START> ::= <Prog> $
 
 <Prog> ::= <ClassDecl> #classList# <FuncDef> #funcDefList# 'main' <FuncBody> #program#
 
