@@ -11,7 +11,7 @@ public class SymbolTable {
         this.records = new HashMap<>();
     }
 
-    private SymbolTable(String name, SymbolTable parent) {
+    SymbolTable(String name, SymbolTable parent) {
         this.name = name;
         this.parent = parent;
         this.records = new HashMap<>();

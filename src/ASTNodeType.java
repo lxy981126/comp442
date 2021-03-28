@@ -1,6 +1,5 @@
 public enum ASTNodeType {
     // leaf
-    NULL("null"),
     NOT("not"),
     ASSIGN_OP("assginOp"),
     REL_OP("relOp"),
@@ -11,8 +10,6 @@ public enum ASTNodeType {
     ID("id"),
     TYPE("type"),
     SIGN("sign"),
-    PRIVATE("private"),
-    PUBLIC("public"),
 
     VISIBILITY("visibility"),
     INDEX_LIST("indexList"),

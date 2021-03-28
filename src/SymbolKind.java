@@ -1,4 +1,4 @@
-public enum SymbolTableRecordType {
+public enum SymbolKind {
     CLASS,
     FUNCTION,
     PARAMETER,

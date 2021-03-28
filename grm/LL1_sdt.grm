@@ -115,8 +115,8 @@
 <TermTail> ::= <MultOp> <Factor> <TermTail>
 <TermTail> ::= EPSILON
 
-<Visibility> ::= #public# 'public' #visibility#
-<Visibility> ::= #private# 'private' #visibility#
+<Visibility> ::= #visibility# 'public'
+<Visibility> ::= #visibility# 'private'
 <Visibility> ::= EPSILON
 
 <Type> ::= #type# 'integer'

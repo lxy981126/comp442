@@ -6,18 +6,9 @@ public class ASTNode {
     ASTNode leftmostChild;
     ASTNodeType type;
     Token token;
+    SymbolTable table;
+    SymbolTableRecord record;
     int id;
-
-    ASTNode() {
-        id = idCounter;
-        idCounter++;
-        parent = null;
-        leftmostSibling = this;
-        rightSibling = null;
-        leftmostChild = null;
-        type = ASTNodeType.NULL;
-        token = null;
-    }
 
     // leaf nodes
     ASTNode(Token token, SemanticSymbol symbol) {
@@ -97,5 +88,9 @@ public class ASTNode {
             }
         }
         return result;
+    }
+
+    public void accept(Visitor visitor) {
+        visitor.visit(this);
     }
 }

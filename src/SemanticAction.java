@@ -183,8 +183,7 @@ public class SemanticAction {
             doAction(stack, symbol, listItemTypes);
         }
         else if (symbol.name.equals("visibility")) {
-            ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
-                    Arrays.asList(ASTNodeType.PRIVATE, ASTNodeType.PUBLIC));
+            ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(Arrays.asList(ASTNodeType.VISIBILITY));
             doAction(stack, symbol, listItemTypes);
         }
     }
