@@ -89,19 +89,24 @@ public class Parser {
 
         astWriter.write("graph ast {\n");
         dotWriter.write("graph ast {\n");
+
         ASTNode currentNode = semanticStack.empty()? null:semanticStack.peek();
-        while (currentNode != null) {
-            astWriter.write(currentNode.toString());
-            dotWriter.write(currentNode.toString());
-            semanticStack.pop();
-            currentNode = semanticStack.empty()? null:semanticStack.peek();
-        }
+        astWriter.write(currentNode.toString());
+        dotWriter.write(currentNode.toString());
+
         astWriter.write("}");
         dotWriter.write("}");
 
         derivationWriter.close();
         astWriter.close();
         dotWriter.close();
+
+        SymbolTableGenerationVisitor symbolTableCreation = new SymbolTableGenerationVisitor();
+        currentNode.accept(symbolTableCreation);
+
+        BufferedWriter symbolTableWriter = new BufferedWriter(new FileWriter("out/" + inputFile + "Table.csv"));
+        symbolTableWriter.write(currentNode.table.toString());
+        symbolTableWriter.close();
 
         if (!(parsingStack.peek() instanceof SyntaxSymbol &&
                 ((SyntaxSymbol) parsingStack.peek()).type == SyntaxSymbolType.END_OF_FILE) ||

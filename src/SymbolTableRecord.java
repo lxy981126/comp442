@@ -1,17 +1,56 @@
 import java.util.ArrayList;
 
 public class SymbolTableRecord {
-    String name;
-    SymbolKind kind;
-    ArrayList<SymbolType> type;
-    SymbolTable link;
-    SymbolTable parent;
+    private String name;
+    private SymbolKind kind;
+    private SymbolType type;
+    private SymbolTable link;
+    private SymbolTable parent;
 
-    SymbolTableRecord(String name, SymbolKind kind, ArrayList<SymbolType> type, SymbolTable link, SymbolTable parent) {
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
         this.name = name;
+    }
+
+    public SymbolKind getKind() {
+        return kind;
+    }
+
+    public void setKind(SymbolKind kind) {
         this.kind = kind;
+
+        if (kind == SymbolKind.FUNCTION) {
+            this.type = new FunctionType();
+        }
+        else if (kind == SymbolKind.VARIABLE || kind == SymbolKind.PARAMETER) {
+            this.type = new VariableType();
+        }
+    }
+
+    public SymbolType getType() {
+        return type;
+    }
+
+    public void setType(SymbolType type) {
         this.type = type;
+    }
+
+    public SymbolTable getLink() {
+        return link;
+    }
+
+    public void setLink(SymbolTable link) {
         this.link = link;
+    }
+
+    public SymbolTable getParent() {
+        return parent;
+    }
+
+    SymbolTableRecord(SymbolTable parent) {
         this.parent = parent;
     }
 

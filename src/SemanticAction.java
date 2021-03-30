@@ -13,8 +13,8 @@ public class SemanticAction {
                 symbol.name.equals("type") ||
                 symbol.name.equals("not") ||
                 symbol.name.equals("id") ||
-                symbol.name.equals("private") ||
-                symbol.name.equals("public") ||
+                symbol.name.equals("visibility") ||
+//                symbol.name.equals("public") ||
                 symbol.name.equals("breakStat") ||
                 symbol.name.equals("continueStat")) {
             stack.push(new ASTNode(token, symbol));
@@ -81,7 +81,7 @@ public class SemanticAction {
         else if (symbol.name.equals("fParam")) {
             ArrayList<ASTNodeType> types = new ArrayList<>
                     (Arrays.asList(ASTNodeType.TYPE, ASTNodeType.ID, ASTNodeType.ARRAY_SIZE_LIST));
-            doAction(stack, symbol, types);
+            actionInOrder(stack, symbol, types);
         }
         else if (symbol.name.equals("methodBody")) {
             ArrayList<ASTNodeType> types = new ArrayList<>(Arrays.asList(ASTNodeType.VARIABLE_DECLARATION_LIST));
@@ -198,6 +198,23 @@ public class SemanticAction {
             listNode.adoptChild(child);
             stack.pop();
             child = stack.empty()? null:stack.peek();
+        }
+
+        stack.push(listNode);
+    }
+
+    private static void actionInOrder(Stack<ASTNode> stack,
+                                      SemanticSymbol symbol,
+                                      ArrayList<ASTNodeType> listItemTypes) {
+        ASTNode listNode = new ASTNode(symbol);
+        int i = listItemTypes.size() - 1;
+
+        ASTNode child = stack.empty()? null:stack.peek();
+        while (i>=0 && child.type == listItemTypes.get(i)) {
+            listNode.adoptChild(child);
+            stack.pop();
+            child = stack.empty()? null:stack.peek();
+            i--;
         }
 
         stack.push(listNode);

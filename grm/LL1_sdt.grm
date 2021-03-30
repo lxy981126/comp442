@@ -12,7 +12,7 @@
 <ClassMethod> ::= EPSILON
 
 <Inherit> ::= 'inherits' #id# 'id' <NestedId> #inherit#
-<Inherit> ::= EPSILON  #inherit#
+<Inherit> ::= EPSILON
 <NestedId> ::= ',' #id# 'id' <NestedId>
 <NestedId> ::= EPSILON
 
