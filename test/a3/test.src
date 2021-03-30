@@ -1,7 +1,13 @@
 class POLYNOMIAL {
-	public func evaluate(float x) : float;
+	public func evaluate(float x, string str) : float;
 	private func privateFunction(integer a): string;
+	public int memberVar;
 };
 
 main
-{}
+{
+    var
+    {
+        int localInt;
+    }
+}

@@ -2,9 +2,6 @@ public class Visitor {
     Visitor() {}
 
     public void visit(ASTNode node) {
-        if (node.type!=ASTNodeType.PROGRAM) {
-            assert node.table!=null;
-        }
         switch (node.type) {
             case NOT -> visitNot(node);
             case ASSIGN_OP -> visitAssignOperation(node);

@@ -105,6 +105,7 @@ public class Parser {
         currentNode.accept(symbolTableCreation);
 
         BufferedWriter symbolTableWriter = new BufferedWriter(new FileWriter("out/" + inputFile + "Table.csv"));
+        symbolTableWriter.write("name, kind, type, link\n");
         symbolTableWriter.write(currentNode.table.toString());
         symbolTableWriter.close();
 

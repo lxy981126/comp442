@@ -3,10 +3,9 @@ import java.util.HashMap;
 public class SymbolTable {
     String name;
     SymbolTable parent;
-    private HashMap<String, SymbolTableRecord> records;
+    HashMap<String, SymbolTableRecord> records;
 
     SymbolTable(SymbolTable parent) {
-//        this.name = "Global";
         this.parent = parent;
         this.records = new HashMap<>();
     }
@@ -18,6 +17,9 @@ public class SymbolTable {
     }
 
     public void insert(SymbolTableRecord record) {
+        if (records.get(record.getName()) != null) {
+            System.err.println("record = " + record);
+        }
         records.put(record.getName(), record);
     }
 

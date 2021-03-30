@@ -28,6 +28,9 @@ public class SymbolTableRecord {
         else if (kind == SymbolKind.VARIABLE || kind == SymbolKind.PARAMETER) {
             this.type = new VariableType();
         }
+        else {
+            this.type = new SymbolType();
+        }
     }
 
     public SymbolType getType() {
@@ -52,14 +55,18 @@ public class SymbolTableRecord {
 
     SymbolTableRecord(SymbolTable parent) {
         this.parent = parent;
+        setKind(SymbolKind.CLASS);
     }
 
     @Override
     public String toString() {
-        String result = name + ", " + kind + ", " + type;
+        String result = name + ", " + kind + ", " + type + ", ";
 
         if (link != null) {
-            result += "\n\n" + link.toString() + "\n\n";
+            result += "\n\n" + link.toString() + "\n";
+        }
+        else {
+            result += "null";
         }
 
         result += "\n";

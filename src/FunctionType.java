@@ -10,11 +10,12 @@ public class FunctionType extends SymbolType {
 
     @Override
     public String toString() {
-        String result = "@return " + returnType.toString() + " (";
+        String result = isPrivate? "private ": "public ";
+        result += returnType == null? "void: ":returnType.toString() + ": ";
+
         for (VariableType parameter:parameters) {
-            result += ", " + parameter.toString();
+            result += parameter.toString() + " ";
         }
-        result += ")";
         return result;
     }
 }
