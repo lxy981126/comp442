@@ -23,9 +23,7 @@ public class SymbolTable {
         records.put(record.getName(), record);
     }
 
-    //todo
-    public void delete(String name) {
-    }
+    public void delete(String name) { records.remove(name); }
 
     public SymbolTableRecord search(String name) {
         return records.get(name);

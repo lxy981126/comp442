@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 public class SymbolTableGenerationVisitor extends Visitor{
 
     @Override
@@ -26,7 +28,7 @@ public class SymbolTableGenerationVisitor extends Visitor{
 
     @Override
     protected void visitVariableDeclaration(ASTNode node) {
-        SymbolTableRecord variableRecord = node.record;
+        SymbolTableRecord variableRecord = new SymbolTableRecord(node.table);
         variableRecord.setKind(SymbolKind.VARIABLE);
         node.record = variableRecord;
         iterateChildren(node);
@@ -37,11 +39,38 @@ public class SymbolTableGenerationVisitor extends Visitor{
     protected void visitVariableDeclarationList(ASTNode node) { iterateChildren(node); }
 
     @Override
-    protected void visitMemberDeclaration(ASTNode node) { iterateChildren(node); }
+    protected void visitStatementList(ASTNode node) { iterateChildren(node); }
+
+    @Override
+    protected void visitMemberDeclaration(ASTNode node) {
+        ASTNode child = node.leftmostChild;
+        while (child != null) {
+            child.table = node.table;
+            child.record = node.record;
+            child.accept(this);
+
+            if (child.type == ASTNodeType.VARIABLE_DECLARATION) {
+                node.record = child.record;
+                node.parent.record = node.record;
+            }
+            child = child.rightSibling;
+        }
+    }
+
+    @Override
+    public void visitFunctionDefinitionList(ASTNode node) { iterateChildren(node); }
 
     @Override
     protected void visitFunctionDefinition(ASTNode node) {
-        iterateChildren(node);
+        SymbolTableRecord funcHeadRecord = new SymbolTableRecord(node.table);
+        funcHeadRecord.setKind(SymbolKind.FUNCTION);
+        node.record = funcHeadRecord;
+
+        SymbolTable funcBodyTable = new SymbolTable(node.table);
+        funcHeadRecord.setLink(funcBodyTable);
+        iterateWithLinkTable(node, funcBodyTable);
+
+        node.table.insert(funcHeadRecord);
     }
 
     @Override
@@ -57,28 +86,38 @@ public class SymbolTableGenerationVisitor extends Visitor{
             child.accept(this);
             child = child.rightSibling;
         }
+        link.name = node.record.getName();
+        link.parent = node.table;
     }
 
     @Override
     protected void visitFunctionHead(ASTNode node) {
-//        SymbolTableRecord functionRecord = new SymbolTableRecord(node.table);
-//        node.record = functionRecord;
-//        iterateChildren(node);
-//        node.table.insert(functionRecord);
+        ASTNode child = node.leftmostChild;
+        while (child != null) {
+            if (child.type == ASTNodeType.ID) {
+                FunctionType type = ((FunctionType) node.record.getType());
+                type.scope = child.token.lexeme;
+                child = child.rightSibling;
+                continue;
+            }
+            child.table = node.table;
+            child.record = node.record;
+            child.accept(this);
+            child = child.rightSibling;
+        }
     }
 
     @Override
-    protected void visitFunctionBody(ASTNode node) {
-        SymbolTableRecord functionBody = new SymbolTableRecord(node.table);
-        functionBody.setKind(SymbolKind.FUNCTION);
-        node.record = functionBody;
+    protected void visitFunctionBody(ASTNode node) { iterateChildren(node); }
 
-        SymbolTable linkTable = new SymbolTable(node.table);
-        iterateWithLinkTable(node, linkTable);
-
-        linkTable.name = functionBody.getName();
-        linkTable.parent = node.table;
-        node.table.insert(functionBody);
+    @Override
+    protected void visitInherit(ASTNode node) {
+        ClassType type = ((ClassType) node.record.getType());
+        ASTNode child = node.leftmostChild;
+        while (child != null) {
+            type.parents.add(child.token.lexeme);
+            child = child.rightSibling;
+        }
     }
 
     @Override
@@ -105,8 +144,11 @@ public class SymbolTableGenerationVisitor extends Visitor{
         node.record = record;
 
         iterateChildren(node);
-        node.table.insert(record);
+        node.table.insert(node.record);
     }
+
+    @Override
+    protected void visitClassMethod(ASTNode node) { iterateChildren(node); }
 
     @Override
     protected void visitMethodBody(ASTNode node) { iterateChildren(node); }
@@ -133,7 +175,33 @@ public class SymbolTableGenerationVisitor extends Visitor{
     @Override
     protected void visitProgram(ASTNode node) {
         node.table = new SymbolTable("Global", null);
-        iterateChildren(node);
+
+        ASTNode child = node.leftmostChild;
+        while (child != null) {
+            if (child.type == ASTNodeType.FUNCTION_BODY) {
+                SymbolTableRecord mainRecord = new SymbolTableRecord(node.table);
+                mainRecord.setKind(SymbolKind.FUNCTION);
+                mainRecord.setName("main");
+
+                SymbolTable mainScope = new SymbolTable(node.table);
+                mainScope.name = mainRecord.getName();
+
+                child.table = mainScope;
+                child.record = mainRecord;
+                child.accept(this);
+
+                mainRecord.setLink(mainScope);
+                node.table.insert(mainRecord);
+                child = child.rightSibling;
+                continue;
+            }
+            child.table = node.table;
+            child.record = node.record;
+            child.accept(this);
+            child = child.rightSibling;
+        }
+
+        resolveFunctionScope(node);
     }
 
     private void iterateChildren(ASTNode node) {
@@ -153,6 +221,24 @@ public class SymbolTableGenerationVisitor extends Visitor{
             child.record = node.record;
             child.accept(this);
             child = child.rightSibling;
+        }
+    }
+
+    private void resolveFunctionScope(ASTNode programNode) {
+        SymbolTable globalTable = programNode.table;
+        ArrayList<SymbolTableRecord> records = new ArrayList<>(programNode.table.records.values());
+
+        for (SymbolTableRecord record:records) {
+            if (record.getKind() == SymbolKind.FUNCTION) {
+
+                FunctionType type = ((FunctionType) record.getType());
+                if (type.scope != null) {
+                    SymbolTableRecord classRecord = globalTable.search(type.scope);
+                    SymbolTable targetTable = classRecord.getLink();
+                    targetTable.insert(record);
+                    globalTable.delete(record.getName());
+                }
+            }
         }
     }
 }

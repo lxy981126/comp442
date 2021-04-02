@@ -14,7 +14,6 @@ public class SemanticAction {
                 symbol.name.equals("not") ||
                 symbol.name.equals("id") ||
                 symbol.name.equals("visibility") ||
-//                symbol.name.equals("public") ||
                 symbol.name.equals("breakStat") ||
                 symbol.name.equals("continueStat")) {
             stack.push(new ASTNode(token, symbol));
@@ -40,10 +39,10 @@ public class SemanticAction {
             doAction(stack, symbol, type);
         }
         else if (symbol.name.equals("classMethod")) {
-            doAction(stack, symbol, new ArrayList<>(Arrays.asList(ASTNodeType.ID)));
+            actionInOrder(stack, symbol, new ArrayList<>(Arrays.asList(ASTNodeType.ID)));
         }
         else if (symbol.name.equals("inherit")) {
-            doAction(stack, symbol, new ArrayList<>(Arrays.asList(ASTNodeType.ID)));
+            inheritAction(stack, symbol);
         }
         else if (symbol.name.equals("funcDefList")) {
             ArrayList<ASTNodeType> listItemType = new ArrayList<>(Arrays.asList(ASTNodeType.FUNCTION_DEFINITION));
@@ -218,6 +217,25 @@ public class SemanticAction {
         }
 
         stack.push(listNode);
+    }
+
+    private static void inheritAction(Stack<ASTNode> stack, SemanticSymbol symbol) {
+        ASTNode inheritNode = new ASTNode(symbol);
+
+        ASTNode child = stack.empty()? null:stack.peek();
+        while (child != null && child.type == ASTNodeType.ID) {
+            stack.pop();
+
+            ASTNode nextNode = stack.empty()? null:stack.peek();
+            if (nextNode == null || nextNode.type != ASTNodeType.ID) {
+                stack.push(child);
+                break;
+            }
+
+            inheritNode.adoptChild(child);
+            child = nextNode;
+        }
+        stack.push(inheritNode);
     }
 
 }

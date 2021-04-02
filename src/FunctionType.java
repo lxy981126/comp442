@@ -2,6 +2,7 @@ import java.util.ArrayList;
 
 public class FunctionType extends SymbolType {
     VariableType returnType;
+    String scope;
     ArrayList<VariableType> parameters;
 
     FunctionType() {

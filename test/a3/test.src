@@ -4,10 +4,22 @@ class POLYNOMIAL {
 	public int memberVar;
 };
 
+class LINEAR inherits POLYNOMIAL {
+};
+
+func POLYNOMIAL::evaluate(float x, string str) : float
+{
+    var
+    {
+        float f;
+    }
+  return ("returned string");
+}
+
 main
 {
     var
     {
-        int localInt;
+        integer localInt;
     }
 }

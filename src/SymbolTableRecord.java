@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-
 public class SymbolTableRecord {
     private String name;
     private SymbolKind kind;
@@ -27,6 +25,9 @@ public class SymbolTableRecord {
         }
         else if (kind == SymbolKind.VARIABLE || kind == SymbolKind.PARAMETER) {
             this.type = new VariableType();
+        }
+        else if (kind == SymbolKind.CLASS) {
+            this.type = new ClassType();
         }
         else {
             this.type = new SymbolType();
