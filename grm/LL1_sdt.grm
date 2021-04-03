@@ -84,11 +84,11 @@
 <FuncStatTailIdnest> ::= EPSILON
 
 <Factor> ::= <FuncOrVar> #factor#
-<Factor> ::= 'intnum' #num# #factor#
-<Factor> ::= 'floatnum' #num# #factor#
-<Factor> ::= 'stringlit' #str# #factor#
+<Factor> ::= #num# 'intnum' #factor#
+<Factor> ::= #num# 'floatnum' #factor#
+<Factor> ::= #str# 'stringlit' #factor#
 <Factor> ::= '(' <Expr> ')' #factor#
-<Factor> ::= 'not' #not# <Factor>
+<Factor> ::= #not# 'not' <Factor>
 <Factor> ::= <Sign> <Factor>
 <Factor> ::= 'qmark' '[' <Expr> ':' <Expr> ':' <Expr> ']' #factor#
 
@@ -125,7 +125,7 @@
 <Type> ::= #type# 'id'
 
 <IntNum> ::= #num# 'intnum'
-<IntNum> ::= EPSILON
+<IntNum> ::= #num# EPSILON
 
 <Sign> ::= #sign# '+'
 <Sign> ::= #sign# '-'

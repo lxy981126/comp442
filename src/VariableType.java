@@ -15,10 +15,25 @@ public class VariableType extends SymbolType {
     }
 
     @Override
+    public boolean equals(Object o) {
+        VariableType variableType = ((VariableType) o);
+        if (className.equals(variableType.className) && dimension.equals(variableType.dimension)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
     public String toString() {
         String result = className;
         for (Integer i:dimension) {
-            result += "[" + i + "]";
+            if (i != null)
+            {
+                result += "[" + i + "]";
+            }
+            else {
+                result += "[]";
+            }
         }
         return result;
     }

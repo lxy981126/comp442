@@ -16,10 +16,7 @@ func POLYNOMIAL::evaluate(float x, string str) : float
   return ("returned string");
 }
 
+// ====== main ====== //
 main
 {
-    var
-    {
-        integer localInt;
-    }
 }

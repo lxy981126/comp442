@@ -101,13 +101,7 @@ public class Parser {
         astWriter.close();
         dotWriter.close();
 
-        SymbolTableGenerationVisitor symbolTableCreation = new SymbolTableGenerationVisitor();
-        currentNode.accept(symbolTableCreation);
-
-        BufferedWriter symbolTableWriter = new BufferedWriter(new FileWriter("out/" + inputFile + "Table.csv"));
-        symbolTableWriter.write("name, kind, type, link\n");
-        symbolTableWriter.write(currentNode.table.toString());
-        symbolTableWriter.close();
+        semanticProcessing(currentNode);
 
         if (!(parsingStack.peek() instanceof SyntaxSymbol &&
                 ((SyntaxSymbol) parsingStack.peek()).type == SyntaxSymbolType.END_OF_FILE) ||
@@ -319,6 +313,20 @@ public class Parser {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void semanticProcessing(ASTNode currentNode) throws IOException {
+        SymbolTableGenerationVisitor symbolTableCreation = new SymbolTableGenerationVisitor
+                ("out/" + inputFile + ".outsemanticerrors");
+        currentNode.accept(symbolTableCreation);
+
+        BufferedWriter symbolTableWriter = new BufferedWriter(new FileWriter("out/" + inputFile + "Table.csv"));
+        symbolTableWriter.write("name, kind, type, link\n");
+        symbolTableWriter.write(currentNode.table.toString());
+        symbolTableWriter.close();
+
+        SemanticCheckingVisitor semanticCheckingVisitor = new SemanticCheckingVisitor();
+//        currentNode.accept(semanticCheckingVisitor);
     }
 
 }

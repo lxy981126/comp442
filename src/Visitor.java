@@ -1,5 +1,17 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+
 public class Visitor {
+    protected static BufferedWriter errorWriter;
+
     Visitor() {}
+
+    Visitor(String errorFile) throws IOException {
+        if(errorWriter == null) {
+            errorWriter = new BufferedWriter(new FileWriter(errorFile));
+        }
+    }
 
     public void visit(ASTNode node) {
         switch (node.type) {

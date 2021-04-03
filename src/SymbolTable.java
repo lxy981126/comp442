@@ -17,10 +17,18 @@ public class SymbolTable {
     }
 
     public void insert(SymbolTableRecord record) {
-        if (records.get(record.getName()) != null) {
-            System.err.println("record = " + record);
+//        if (records.get(record.getName()) != null) {
+//            System.err.println("record = " + record);
+//        }
+
+        String key = record.getName();
+        if (record.getKind() == SymbolKind.FUNCTION) {
+            String scope = ((FunctionType) record.getType()).scope;
+            if (scope != null) {
+                key = ((FunctionType) record.getType()).scope + "::" + key;
+            }
         }
-        records.put(record.getName(), record);
+        records.put(key, record);
     }
 
     public void delete(String name) { records.remove(name); }
