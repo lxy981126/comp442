@@ -7,16 +7,23 @@ class POLYNOMIAL {
 class LINEAR inherits POLYNOMIAL {
 };
 
-func POLYNOMIAL::evaluate(float x, string str) : float
+func POLYNOMIAL::evaluate(float x, string str) : string
 {
     var
     {
         float f;
     }
+    f = 1;
   return ("returned string");
 }
 
 // ====== main ====== //
 main
 {
+    var {
+         integer a;
+         integer b;
+    }
+    f = 2;
+    //a = a*b;
 }

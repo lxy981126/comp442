@@ -4,6 +4,15 @@ public class SymbolTableRecord {
     private SymbolType type;
     private SymbolTable link;
     private SymbolTable parent;
+    private int location;
+
+    public int getLocation() {
+        return location;
+    }
+
+    public void setLocation(int location) {
+        this.location = location;
+    }
 
     public String getName() {
         return name;
@@ -47,6 +56,7 @@ public class SymbolTableRecord {
     }
 
     public void setLink(SymbolTable link) {
+        link.level = parent.level + 1;
         this.link = link;
     }
 
@@ -57,6 +67,12 @@ public class SymbolTableRecord {
     SymbolTableRecord(SymbolTable parent) {
         this.parent = parent;
         setKind(SymbolKind.CLASS);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        SymbolTableRecord record = ((SymbolTableRecord) o);
+        return name.equals(record.getName()) && parent.equals(record.parent) && type.equals(record.type);
     }
 
     @Override

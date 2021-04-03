@@ -13,6 +13,12 @@ public class SymbolTableGenerationVisitor extends Visitor{
     @Override
     protected void visitId(ASTNode node) {
         node.record.setName(node.token.lexeme);
+        node.record.setLocation(node.token.location);
+    }
+
+    @Override
+    protected void visitString(ASTNode node) {
+        node.record = new SymbolTableRecord(node.table);
     }
 
     @Override
@@ -26,6 +32,7 @@ public class SymbolTableGenerationVisitor extends Visitor{
         }
     }
 
+
     @Override
     protected void visitVisibility(ASTNode node) {
         if (node.token != null) {
@@ -34,28 +41,28 @@ public class SymbolTableGenerationVisitor extends Visitor{
         }
     }
 
-//    @Override
-//    protected void visitIndexList(ASTNode node) {
-//        //todo
-//    }
-//
-//    @Override
-//    protected void visitFactor(ASTNode node) { inheritParentTable(node); }
-//
-//    @Override
-//    protected void visitFunctionOrVariable(ASTNode node) { inheritParentTable(node); }
-//
-//    @Override
-//    protected void visitTerm(ASTNode node) { inheritParentTable(node); }
-//
-//    @Override
-//    protected void visitArithmeticExpression(ASTNode node) { inheritParentTable(node); }
-//
-//    @Override
-//    protected void visitExpression(ASTNode node) { inheritParentTable(node); }
-//
-//    @Override
-//    protected void visitVariable(ASTNode node) { inheritParentTable(node); }
+    @Override
+    protected void visitIndexList(ASTNode node) {
+        //todo
+    }
+
+    @Override
+    protected void visitFactor(ASTNode node) { inheritParentTable(node); }
+
+    @Override
+    protected void visitFunctionOrVariable(ASTNode node) { inheritParentTable(node); }
+
+    @Override
+    protected void visitTerm(ASTNode node) { inheritParentTable(node); }
+
+    @Override
+    protected void visitArithmeticExpression(ASTNode node) { inheritParentTable(node); }
+
+    @Override
+    protected void visitExpression(ASTNode node) { inheritParentTable(node); }
+
+    @Override
+    protected void visitVariable(ASTNode node) { inheritParentTable(node); }
 
     @Override
     protected void visitVariableDeclaration(ASTNode node) {
@@ -63,17 +70,23 @@ public class SymbolTableGenerationVisitor extends Visitor{
         variableRecord.setKind(SymbolKind.VARIABLE);
         node.record = variableRecord;
         iterateChildren(node);
-        node.table.insert(variableRecord);
+        boolean error = node.table.insert(variableRecord);
+        if (error) {
+            errorHandling(node);
+        }
     }
 
     @Override
     protected void visitVariableDeclarationList(ASTNode node) { iterateChildren(node); }
 
     @Override
-    protected void visitStatementList(ASTNode node) { inheritParentTable(node); }
+    protected void visitStatementList(ASTNode node) { iterateChildren(node); }
 
     @Override
     protected void visitAssignStatement(ASTNode node) { inheritParentTable(node); }
+
+    @Override
+    protected void visitReturnStatement(ASTNode node) { inheritParentTable(node); }
 
     @Override
     protected void visitArraySizeList(ASTNode node) {
@@ -102,6 +115,7 @@ public class SymbolTableGenerationVisitor extends Visitor{
             if (child.type == ASTNodeType.VARIABLE_DECLARATION) {
                 node.record = child.record;
                 node.parent.record = node.record;
+                child.table.delete(child.record);
             }
             child = child.rightSibling;
         }
@@ -120,7 +134,12 @@ public class SymbolTableGenerationVisitor extends Visitor{
         funcHeadRecord.setLink(funcBodyTable);
         iterateWithLinkTable(node, funcBodyTable);
 
-        node.table.insert(funcHeadRecord);
+        boolean error = node.table.insert(funcHeadRecord);
+        if (error) {
+            errorHandling(node);
+        }
+        funcBodyTable.name = node.record.getName();
+        funcBodyTable.parent = node.table;
     }
 
     @Override
@@ -185,7 +204,10 @@ public class SymbolTableGenerationVisitor extends Visitor{
 
         linkTable.name = record.getName();
         linkTable.parent = node.table;
-        node.table.insert(record);
+        boolean error = node.table.insert(record);
+        if (error) {
+            errorHandling(node);
+        }
     }
 
     @Override
@@ -194,7 +216,11 @@ public class SymbolTableGenerationVisitor extends Visitor{
         node.record = record;
 
         iterateChildren(node);
-        node.table.insert(node.record);
+
+        boolean error = node.table.insert(node.record);
+        if (error) {
+            errorHandling(node);
+        }
     }
 
     @Override
@@ -210,14 +236,17 @@ public class SymbolTableGenerationVisitor extends Visitor{
         node.record = parameterRecord;
 
         iterateChildren(node);
-        node.table.insert(node.record);
+        boolean error = node.table.insert(node.record);
+        if (error) {
+            errorHandling(node);
+        }
     }
 
     @Override
     protected void visitFunctionParameterList(ASTNode node) {
         iterateChildren(node);
         FunctionType functionType = (FunctionType) node.record.getType();
-        for (SymbolTableRecord record:node.record.getLink().records.values()) {
+        for (SymbolTableRecord record:node.record.getLink().records) {
             functionType.parameters.add((VariableType) record.getType());
         }
     }
@@ -241,7 +270,10 @@ public class SymbolTableGenerationVisitor extends Visitor{
                 child.accept(this);
 
                 mainRecord.setLink(mainScope);
-                node.table.insert(mainRecord);
+                boolean error = node.table.insert(mainRecord);
+                if (error) {
+                    errorHandling(child);
+                }
                 child = child.rightSibling;
                 continue;
             }
@@ -285,7 +317,7 @@ public class SymbolTableGenerationVisitor extends Visitor{
 
     private void resolveFunctionScope(ASTNode programNode) {
         SymbolTable globalTable = programNode.table;
-        ArrayList<SymbolTableRecord> records = new ArrayList<>(programNode.table.records.values());
+        ArrayList<SymbolTableRecord> records = new ArrayList<>(programNode.table.records);
 
         for (SymbolTableRecord record:records) {
             if (record.getKind() == SymbolKind.FUNCTION) {
@@ -293,11 +325,25 @@ public class SymbolTableGenerationVisitor extends Visitor{
                 FunctionType type = ((FunctionType) record.getType());
                 if (type.scope != null) {
                     SymbolTableRecord classRecord = globalTable.search(type.scope);
-                    SymbolTable targetTable = classRecord.getLink();
-                    targetTable.insert(record);
-                    globalTable.delete(record.getName());
+                    SymbolTable classTable = classRecord.getLink();
+                    SymbolTableRecord functionRecord = classTable.search(record.getName());
+
+                    functionRecord.setLink(record.getLink());
+                    globalTable.delete(record);
                 }
             }
+        }
+    }
+
+    private void errorHandling(ASTNode node) {
+        String errorMessage = "Multiply declared " + node.record.getKind() + " at line " + node.record.getLocation() +
+                ": " + node.record.getName() + "\n";
+        try {
+            System.err.print(errorMessage);
+            errorWriter.write(errorMessage);
+            errorWriter.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

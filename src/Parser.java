@@ -326,7 +326,7 @@ public class Parser {
         symbolTableWriter.close();
 
         SemanticCheckingVisitor semanticCheckingVisitor = new SemanticCheckingVisitor();
-//        currentNode.accept(semanticCheckingVisitor);
+        currentNode.accept(semanticCheckingVisitor);
     }
 
 }

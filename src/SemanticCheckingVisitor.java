@@ -5,12 +5,26 @@ public class SemanticCheckingVisitor extends Visitor{
     @Override
     protected void visitId(ASTNode node) {
         node.record = node.table.search(node.token.lexeme);
+        if (node.record == null) {
+            outputError("Use of undeclared variable: " + node.token.lexeme + "(line " + node.token.location + ")\n");
+        }
+        else {
+            node.record.setLocation(node.token.location);
+        }
+    }
+
+    protected void visitString(ASTNode node) {
+        node.record = new SymbolTableRecord(node.table);
+        node.record.setKind(SymbolKind.VARIABLE);
+        ((VariableType) node.record.getType()).className = "string";
+        node.record.setLocation(node.token.location);
     }
 
     @Override
     protected void visitNum(ASTNode node) {
         node.record = new SymbolTableRecord(node.table);
         node.record.setKind(SymbolKind.VARIABLE);
+        node.record.setLocation(node.token.location);
 
         if (node.token.getType() == TokenType.INTEGER_NUMBER) {
             ((VariableType) node.record.getType()).className = "int";
@@ -18,12 +32,11 @@ public class SemanticCheckingVisitor extends Visitor{
         else if (node.token.getType() == TokenType.FLOAT_NUMBER) {
             ((VariableType) node.record.getType()).className = "float";
         }
-
-        node.parent.record = node.record;
     }
 
     @Override
     protected void visitFactor(ASTNode node) { iterateChildren(node); }
+
     @Override
     protected void visitTerm(ASTNode node) { iterateChildren(node); }
 
@@ -35,37 +48,43 @@ public class SemanticCheckingVisitor extends Visitor{
 
     @Override
     public void visitAssignStatement(ASTNode node) {
-        VariableType lhs = null;
-        VariableType rhs = null;
+        SymbolTableRecord lhs = null;
+        SymbolTableRecord rhs = null;
 
         ASTNode child = node.leftmostChild;
         while (child != null) {
             child.accept(this);
 
             if (child.type == ASTNodeType.ID) {
-                lhs = ((VariableType) child.record.getType());
+                lhs = child.record;
             }
-
             if (child.type == ASTNodeType.EXPRESSION) {
-                rhs = (VariableType) child.record.getType();
+                rhs = child.record;
             }
             child = child.rightSibling;
         }
-        checkType(lhs, rhs);
+
+        if (lhs != null && rhs != null) {
+            checkType(lhs.getName(), rhs.getName(), lhs.getType(), rhs.getType(), lhs.getLocation(), rhs.getLocation());
+        }
     }
 
     @Override
     protected void visitReturnStatement(ASTNode node) {
-        VariableType returnType = ((FunctionType) node.record.getType()).returnType;
-        VariableType givenType = null;
+        SymbolTableRecord returnRecord = node.record;
+        SymbolTableRecord givenRecord = null;
+        FunctionType returnType = ((FunctionType) returnRecord.getType());
 
         ASTNode child = node.leftmostChild;
         while (child != null) {
             child.accept(this);
-            givenType = (VariableType) child.record.getType();
+            givenRecord = child.record;
             child = child.rightSibling;
         }
-        checkType(returnType, givenType);
+        if (returnRecord != null && givenRecord != null) {
+            checkType(returnRecord.getName(), givenRecord.getName(), returnType.returnType, givenRecord.getType(),
+                    returnRecord.getLocation(), givenRecord.getLocation());
+        }
     }
 
     @Override
@@ -102,19 +121,23 @@ public class SemanticCheckingVisitor extends Visitor{
         }
     }
 
-    private void checkType(SymbolType type1, SymbolType type2) {
-        // todo: print error location
-        String errorMessage = "mismatch return type";
-        if (!type1.equals(type2)) {
-            System.err.println(errorMessage);
+    private void checkType(String name1, String name2, SymbolType type1, SymbolType type2, int location1, int location2) {
+        String errorMessage = "Mismatch type: " + name1 + "(line " + location1 + "), " +
+                name2 + "(line " + location2 + ")\n";
 
-            try {
-                errorWriter.write(errorMessage);
-                errorWriter.flush();
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
+        if (!type1.equals(type2)) {
+            outputError(errorMessage);
+        }
+    }
+
+    private void outputError(String message) {
+        System.err.print(message);
+        try {
+            errorWriter.write(message);
+            errorWriter.flush();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

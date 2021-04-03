@@ -10,6 +10,7 @@ public class SemanticAction {
                 symbol.name.equals("relOp") ||
                 symbol.name.equals("sign") ||
                 symbol.name.equals("num") ||
+                symbol.name.equals("str") ||
                 symbol.name.equals("type") ||
                 symbol.name.equals("not") ||
                 symbol.name.equals("id") ||

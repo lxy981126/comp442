@@ -1,47 +1,51 @@
-import java.util.HashMap;
+import java.util.ArrayList;
 
 public class SymbolTable {
     String name;
     SymbolTable parent;
-    HashMap<String, SymbolTableRecord> records;
+    ArrayList<SymbolTableRecord> records;
+    int level;
 
     SymbolTable(SymbolTable parent) {
         this.parent = parent;
-        this.records = new HashMap<>();
+        this.records = new ArrayList<>();
+        this.level = parent.level + 1;
     }
 
     SymbolTable(String name, SymbolTable parent) {
         this.name = name;
         this.parent = parent;
-        this.records = new HashMap<>();
+        this.records = new ArrayList<>();
+        this.level = 0;
     }
 
-    public void insert(SymbolTableRecord record) {
-//        if (records.get(record.getName()) != null) {
-//            System.err.println("record = " + record);
-//        }
-
-        String key = record.getName();
-        if (record.getKind() == SymbolKind.FUNCTION) {
-            String scope = ((FunctionType) record.getType()).scope;
-            if (scope != null) {
-                key = ((FunctionType) record.getType()).scope + "::" + key;
-            }
+    public boolean insert(SymbolTableRecord record) {
+        if (records.contains(record)) {
+            return true;
         }
-        records.put(key, record);
+        records.add(record);
+        return false;
     }
 
-    public void delete(String name) { records.remove(name); }
+    public void delete(SymbolTableRecord name) { records.remove(name); }
 
     public SymbolTableRecord search(String name) {
-        return records.get(name);
+        for (SymbolTableRecord record: records) {
+            if (record.getName().equals(name)) {
+                return record;
+            }
+        }
+        return null;
     }
 
     @Override
     public String toString() {
         String result = "";
 
-        for (SymbolTableRecord record: records.values()) {
+        for (SymbolTableRecord record: records) {
+            for (int i = 0; i < level; i++) {
+                result += "\t";
+            }
             result += record.toString();
         }
 
