@@ -114,4 +114,15 @@ public class Visitor {
     protected void visitFunctionParameterList(ASTNode node) {}
     protected void visitFunctionParameter(ASTNode node) {}
     protected void visitProgram(ASTNode node) {}
+
+    protected void outputError(String errorMessage) {
+        try {
+            System.err.print(errorMessage);
+            errorWriter.write(errorMessage);
+            errorWriter.flush();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

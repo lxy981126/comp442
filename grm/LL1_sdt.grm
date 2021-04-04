@@ -45,11 +45,11 @@
 <ArraySizeRept> ::= EPSILON
 
 <Variable> ::= #id# 'id' <VariableIdnest> #var#
-<VariableIdnest> ::= <IndiceRep> #indexList# <VariableIdnestTail>
+<VariableIdnest> ::= <IndiceRep> <VariableIdnestTail>
 <VariableIdnestTail> ::= '.' #id# 'id' <VariableIdnest>
 <VariableIdnestTail> ::= EPSILON
 
-<IndiceRep> ::= '[' <Expr> ']' <IndiceRep>
+<IndiceRep> ::= '[' <Expr> ']' <IndiceRep>  #indexList#
 <IndiceRep> ::= EPSILON
 
 <StatBlock> ::= '{' <StatementList> #statList# '}' #statBlock#
@@ -69,7 +69,7 @@
 <Statement> ::= <FuncOrAssignStat> ';' #assignStat#
 
 <FuncOrAssignStat> ::= #id# 'id' <FuncOrAssignStatIdnest>
-<FuncOrAssignStatIdnest> ::= <IndiceRep> #indexList# <FuncOrAssignStatIdnestVarTail>
+<FuncOrAssignStatIdnest> ::= <IndiceRep> <FuncOrAssignStatIdnestVarTail>
 <FuncOrAssignStatIdnest> ::= '(' <AParams> ')' <FuncOrAssignStatIdnestFuncTail>
 <FuncOrAssignStatIdnestVarTail> ::= '.' #id# 'id' <FuncOrAssignStatIdnest>
 <FuncOrAssignStatIdnestVarTail> ::= <AssignStatTail>
@@ -78,7 +78,7 @@
 <FuncOrAssignStatIdnestFuncTail> ::= '.' #id# 'id' <FuncStatTail>
 <FuncOrAssignStatIdnestFuncTail> ::= EPSILON
 
-<FuncStatTail> ::= <IndiceRep> #indexList# '.' #id# 'id' <FuncStatTail>
+<FuncStatTail> ::= <IndiceRep> '.' #id# 'id' <FuncStatTail>
 <FuncStatTail> ::= '(' <AParams> ')' <FuncStatTailIdnest>
 <FuncStatTailIdnest> ::= '.' #id# 'id' <FuncStatTail>
 <FuncStatTailIdnest> ::= EPSILON
@@ -93,7 +93,7 @@
 <Factor> ::= 'qmark' '[' <Expr> ':' <Expr> ':' <Expr> ']' #factor#
 
 <FuncOrVar> ::= #id# 'id' <FuncOrVarIdnest> #funcOrVar#
-<FuncOrVarIdnest> ::= <IndiceRep> #indexList# <FuncOrVarIdnestTail>
+<FuncOrVarIdnest> ::= <IndiceRep> <FuncOrVarIdnestTail>
 <FuncOrVarIdnest> ::= '(' <AParams> ')' <FuncOrVarIdnestTail>
 <FuncOrVarIdnestTail> ::= '.' #id# 'id' <FuncOrVarIdnest>
 <FuncOrVarIdnestTail> ::= EPSILON

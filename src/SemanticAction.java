@@ -1,3 +1,4 @@
+import java.net.IDN;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Stack;
@@ -155,9 +156,7 @@ public class SemanticAction {
             doAction(stack, symbol, listItemTypes);
         }
         else if (symbol.name.equals("funcOrVar")) {
-            ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
-                    Arrays.asList(ASTNodeType.ID, ASTNodeType.INDEX_LIST, ASTNodeType.APARAM_LIST));
-            doAction(stack, symbol, listItemTypes);
+            funcOrVarAction(stack, symbol);
         }
         else if (symbol.name.equals("aParamList")) {
             ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(Arrays.asList(ASTNodeType.APARAM));
@@ -239,4 +238,30 @@ public class SemanticAction {
         stack.push(inheritNode);
     }
 
+    private static void funcOrVarAction(Stack<ASTNode> stack, SemanticSymbol symbol) {
+        ASTNode funcOrVar = new ASTNode(symbol);
+
+        ASTNode child = stack.empty()? null:stack.peek();
+        if (child.type == ASTNodeType.ID) {
+            funcOrVar.adoptChild(child);
+            stack.pop();
+            child = stack.empty()? null:stack.peek();
+        }
+
+        boolean canAdoptId = false;
+        while (child != null && (child.type == ASTNodeType.INDEX_LIST ||
+                child.type == ASTNodeType.APARAM_LIST ||
+                (child.type == ASTNodeType.ID && canAdoptId))) {
+            funcOrVar.adoptChild(child);
+            if (child.type == ASTNodeType.INDEX_LIST || child.type == ASTNodeType.APARAM_LIST) {
+                canAdoptId = true;
+            }
+            else {
+                canAdoptId = false;
+            }
+            stack.pop();
+            child = stack.empty()? null:stack.peek();
+        }
+        stack.push(funcOrVar);
+    }
 }

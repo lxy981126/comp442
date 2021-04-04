@@ -1,10 +1,13 @@
 class POLYNOMIAL {
-	public func evaluate(float x, string str) : float;
+	public func evaluate(float x, string str) : string;
 	private func privateFunction(integer a): string;
 	public int memberVar;
 };
 
 class LINEAR inherits POLYNOMIAL {
+	public float memberVar;
+    private func privateFunction(string str): string;
+    public func noDefinition(String str): void;
 };
 
 func POLYNOMIAL::evaluate(float x, string str) : string
@@ -13,8 +16,13 @@ func POLYNOMIAL::evaluate(float x, string str) : string
     {
         float f;
     }
-    f = 1;
+    f = 1.2;
   return ("returned string");
+}
+
+func POLYNOMIAL::noDeclaration(float x, string str) : string
+{
+
 }
 
 // ====== main ====== //
@@ -23,7 +31,8 @@ main
     var {
          integer a;
          integer b;
+         float c;
     }
-    f = 2;
-    //a = a*b;
+    //f = 2;
+    a = a*b;
 }

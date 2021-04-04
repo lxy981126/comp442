@@ -4,6 +4,7 @@ public class FunctionType extends SymbolType {
     VariableType returnType;
     String scope;
     ArrayList<VariableType> parameters;
+    boolean hasDefinition = false;
 
     FunctionType() {
         parameters = new ArrayList<>();

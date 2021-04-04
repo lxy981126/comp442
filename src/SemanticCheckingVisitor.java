@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class SemanticCheckingVisitor extends Visitor{
 
@@ -6,7 +7,7 @@ public class SemanticCheckingVisitor extends Visitor{
     protected void visitId(ASTNode node) {
         node.record = node.table.search(node.token.lexeme);
         if (node.record == null) {
-            outputError("Use of undeclared variable: " + node.token.lexeme + "(line " + node.token.location + ")\n");
+            outputError("Semantic Error - Use of undeclared variable: " + node.token.lexeme + "(line " + node.token.location + ")\n");
         }
         else {
             node.record.setLocation(node.token.location);
@@ -35,16 +36,53 @@ public class SemanticCheckingVisitor extends Visitor{
     }
 
     @Override
-    protected void visitFactor(ASTNode node) { iterateChildren(node); }
+    protected void visitFactor(ASTNode node) {
+        iterateChildren(node);
+    }
 
     @Override
-    protected void visitTerm(ASTNode node) { iterateChildren(node); }
+    protected void visitFunctionOrVariable(ASTNode node) {
+        iterateChildren(node);
+    }
 
     @Override
-    protected void visitArithmeticExpression(ASTNode node) { iterateChildren(node); }
+    protected void visitTerm(ASTNode node) {
+        ArrayList<SymbolTableRecord> records = new ArrayList<>();
+
+        ASTNode child = node.leftmostChild;
+        while (child != null) {
+            child.accept(this);
+            if (child.type == ASTNodeType.FACTOR) {
+                records.add(child.record);
+            }
+            child = child.rightSibling;
+        }
+
+        checkType(records);
+        node.record = records.get(0);
+    }
 
     @Override
-    protected void visitExpression(ASTNode node) { iterateChildren(node); }
+    protected void visitArithmeticExpression(ASTNode node) {
+        ArrayList<SymbolTableRecord> records = new ArrayList<>();
+
+        ASTNode child = node.leftmostChild;
+        while (child != null) {
+            child.accept(this);
+            if (child.type == ASTNodeType.TERM) {
+                records.add(child.record);
+            }
+            child = child.rightSibling;
+        }
+
+        checkType(records);
+        node.record = records.get(0);
+    }
+
+    @Override
+    protected void visitExpression(ASTNode node) {
+        iterateChildren(node);
+    }
 
     @Override
     public void visitAssignStatement(ASTNode node) {
@@ -71,7 +109,7 @@ public class SemanticCheckingVisitor extends Visitor{
 
     @Override
     protected void visitReturnStatement(ASTNode node) {
-        SymbolTableRecord returnRecord = node.record;
+        SymbolTableRecord returnRecord = node.table.parent.search(node.table.name);
         SymbolTableRecord givenRecord = null;
         FunctionType returnType = ((FunctionType) returnRecord.getType());
 
@@ -121,8 +159,17 @@ public class SemanticCheckingVisitor extends Visitor{
         }
     }
 
+    private void checkType(ArrayList<SymbolTableRecord> records) {
+        for (int i = 1; i < records.size(); i++) {
+            SymbolTableRecord record1 = records.get(i - 1);
+            SymbolTableRecord record2 = records.get(i);
+            checkType(record1.getName(), record2.getName(), record1.getType(), record2.getType(), record1.getLocation(),
+                    record2.getLocation());
+        }
+    }
+
     private void checkType(String name1, String name2, SymbolType type1, SymbolType type2, int location1, int location2) {
-        String errorMessage = "Mismatch type: " + name1 + "(line " + location1 + "), " +
+        String errorMessage = "Semantic Error - Mismatch type: " + name1 + "(line " + location1 + "), " +
                 name2 + "(line " + location2 + ")\n";
 
         if (!type1.equals(type2)) {
@@ -130,14 +177,4 @@ public class SemanticCheckingVisitor extends Visitor{
         }
     }
 
-    private void outputError(String message) {
-        System.err.print(message);
-        try {
-            errorWriter.write(message);
-            errorWriter.flush();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 }

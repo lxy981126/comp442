@@ -47,22 +47,34 @@ public class SymbolTableGenerationVisitor extends Visitor{
     }
 
     @Override
-    protected void visitFactor(ASTNode node) { inheritParentTable(node); }
+    protected void visitFactor(ASTNode node) {
+        collectLeafRecord(node);
+    }
 
     @Override
-    protected void visitFunctionOrVariable(ASTNode node) { inheritParentTable(node); }
+    protected void visitFunctionOrVariable(ASTNode node) {
+        collectLeafRecord(node);
+    }
 
     @Override
-    protected void visitTerm(ASTNode node) { inheritParentTable(node); }
+    protected void visitTerm(ASTNode node) {
+        collectLeafRecord(node);
+    }
 
     @Override
-    protected void visitArithmeticExpression(ASTNode node) { inheritParentTable(node); }
+    protected void visitArithmeticExpression(ASTNode node) {
+        collectLeafRecord(node);
+    }
 
     @Override
-    protected void visitExpression(ASTNode node) { inheritParentTable(node); }
+    protected void visitExpression(ASTNode node) {
+        collectLeafRecord(node);
+    }
 
     @Override
-    protected void visitVariable(ASTNode node) { inheritParentTable(node); }
+    protected void visitVariable(ASTNode node) {
+        collectLeafRecord(node);
+    }
 
     @Override
     protected void visitVariableDeclaration(ASTNode node) {
@@ -77,16 +89,24 @@ public class SymbolTableGenerationVisitor extends Visitor{
     }
 
     @Override
-    protected void visitVariableDeclarationList(ASTNode node) { iterateChildren(node); }
+    protected void visitVariableDeclarationList(ASTNode node) {
+        iterateChildren(node);
+    }
 
     @Override
-    protected void visitStatementList(ASTNode node) { iterateChildren(node); }
+    protected void visitStatementList(ASTNode node) {
+        iterateChildren(node);
+    }
 
     @Override
-    protected void visitAssignStatement(ASTNode node) { inheritParentTable(node); }
+    protected void visitAssignStatement(ASTNode node) {
+        collectLeafRecord(node);
+    }
 
     @Override
-    protected void visitReturnStatement(ASTNode node) { inheritParentTable(node); }
+    protected void visitReturnStatement(ASTNode node) {
+        collectLeafRecord(node);
+    }
 
     @Override
     protected void visitArraySizeList(ASTNode node) {
@@ -122,7 +142,9 @@ public class SymbolTableGenerationVisitor extends Visitor{
     }
 
     @Override
-    public void visitFunctionDefinitionList(ASTNode node) { iterateChildren(node); }
+    public void visitFunctionDefinitionList(ASTNode node) {
+        iterateChildren(node);
+    }
 
     @Override
     protected void visitFunctionDefinition(ASTNode node) {
@@ -177,7 +199,10 @@ public class SymbolTableGenerationVisitor extends Visitor{
     }
 
     @Override
-    protected void visitFunctionBody(ASTNode node) { iterateChildren(node); }
+    protected void visitFunctionBody(ASTNode node) {
+        iterateChildren(node);
+        ((FunctionType) node.record.getType()).hasDefinition = true;
+    }
 
     @Override
     protected void visitInherit(ASTNode node) {
@@ -190,7 +215,9 @@ public class SymbolTableGenerationVisitor extends Visitor{
     }
 
     @Override
-    protected void visitClassList(ASTNode node) { iterateChildren(node); }
+    protected void visitClassList(ASTNode node) {
+        iterateChildren(node);
+    }
 
     @Override
     protected void visitClassDeclaration(ASTNode node) {
@@ -204,6 +231,13 @@ public class SymbolTableGenerationVisitor extends Visitor{
 
         linkTable.name = record.getName();
         linkTable.parent = node.table;
+
+        for (SymbolTableRecord linkRecord:linkTable.records) {
+            if (linkRecord.getKind()==SymbolKind.FUNCTION) {
+                ((FunctionType) linkRecord.getType()).scope = linkTable.name;
+            }
+        }
+
         boolean error = node.table.insert(record);
         if (error) {
             errorHandling(node);
@@ -224,10 +258,14 @@ public class SymbolTableGenerationVisitor extends Visitor{
     }
 
     @Override
-    protected void visitClassMethod(ASTNode node) { iterateChildren(node); }
+    protected void visitClassMethod(ASTNode node) {
+        iterateChildren(node);
+    }
 
     @Override
-    protected void visitMethodBody(ASTNode node) { iterateChildren(node); }
+    protected void visitMethodBody(ASTNode node) {
+        iterateChildren(node);
+    }
 
     @Override
     protected void visitFunctionParameter(ASTNode node) {
@@ -247,7 +285,9 @@ public class SymbolTableGenerationVisitor extends Visitor{
         iterateChildren(node);
         FunctionType functionType = (FunctionType) node.record.getType();
         for (SymbolTableRecord record:node.record.getLink().records) {
-            functionType.parameters.add((VariableType) record.getType());
+            if (record.getKind() == SymbolKind.PARAMETER){
+                functionType.parameters.add((VariableType) record.getType());
+            }
         }
     }
 
@@ -284,6 +324,7 @@ public class SymbolTableGenerationVisitor extends Visitor{
         }
 
         resolveFunctionScope(node);
+        semanticChecking(node);
     }
 
     private void iterateChildren(ASTNode node) {
@@ -306,11 +347,21 @@ public class SymbolTableGenerationVisitor extends Visitor{
         }
     }
 
-    private void inheritParentTable(ASTNode parent) {
+    private void collectLeafRecord(ASTNode parent) {
         ASTNode child = parent.leftmostChild;
+
         while (child != null) {
+            if (child.leftmostChild == null) {
+                if (child.type == ASTNodeType.ID) {
+                    child.record = new SymbolTableRecord(parent.table);
+                    child.record.setKind(SymbolKind.VARIABLE);
+                }
+            }
             child.table = parent.table;
-            child.record = parent.record;
+            if (child.leftmostChild != null) {
+                child.accept(this);
+            }
+            parent.record = child.record;
             child = child.rightSibling;
         }
     }
@@ -328,22 +379,103 @@ public class SymbolTableGenerationVisitor extends Visitor{
                     SymbolTable classTable = classRecord.getLink();
                     SymbolTableRecord functionRecord = classTable.search(record.getName());
 
-                    functionRecord.setLink(record.getLink());
-                    globalTable.delete(record);
+                    if (functionRecord != null) {
+                        functionRecord.setLink(record.getLink());
+                        functionRecord.setParent(classTable);
+                        functionRecord.setType(record.getType());
+                        functionRecord.getLink().parent = classTable;
+                        globalTable.delete(record);
+                    }
+                    else {
+                        String errorMessage = "Semantic Error - No declaration for declared member function at line " +
+                                record.getLocation() + ": " + record.getName() + "\n";
+                        outputError(errorMessage);
+                    }
+                }
+                if (type.scope == null) {
+                    type.scope = globalTable.name;
                 }
             }
         }
     }
 
-    private void errorHandling(ASTNode node) {
-        String errorMessage = "Multiply declared " + node.record.getKind() + " at line " + node.record.getLocation() +
-                ": " + node.record.getName() + "\n";
-        try {
-            System.err.print(errorMessage);
-            errorWriter.write(errorMessage);
-            errorWriter.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void semanticChecking(ASTNode programNode) {
+        SymbolTable globalTable = programNode.table;
+        for (SymbolTableRecord record:globalTable.records) {
+
+            if (record.getKind() == SymbolKind.CLASS) {
+                shadowedMember(record);
+                circularClassDependency(record);
+                memberFunctionDefinition(record);
+            }
+            else if (record.getKind() == SymbolKind.FUNCTION) {
+                classOverloading(record);
+            }
         }
     }
+
+    private void shadowedMember(SymbolTableRecord record) {
+        SymbolTable classTable = record.getLink();
+        ClassType classType = ((ClassType) record.getType());
+
+        for (String parentClassName:classType.parents) {
+            SymbolTable parentClassBody = record.getParent().search(parentClassName).getLink();
+            for (SymbolTableRecord classMember:classTable.records) {
+
+                if (parentClassBody.search(classMember.getName()) != null) {
+                    String errorMessage = "Semantic Warning - Shadowed inherited member at line " +
+                            classMember.getLocation() + ": " + classMember.getName() + "\n";
+                    outputError(errorMessage);
+                }
+            }
+        }
+    }
+
+    private void circularClassDependency(SymbolTableRecord record) {
+        ClassType classType = ((ClassType) record.getType());
+
+        for (String parentClassName:classType.parents) {
+            SymbolTableRecord parentClassRecord = record.getParent().search(parentClassName);
+            ClassType parentClassType = ((ClassType) parentClassRecord.getType());
+            for (String parentInheritedClass: parentClassType.parents) {
+
+                if (parentInheritedClass.equals(record.getName())) {
+                    String errorMessage = "Semantic Error - Circular class dependency at line " +
+                            record.getLocation() + ": " + record.getName() + "\n";
+                    outputError(errorMessage);
+                }
+            }
+        }
+    }
+
+    private void memberFunctionDefinition(SymbolTableRecord record) {
+        SymbolTable classTable = record.getLink();
+        for (SymbolTableRecord classMember:classTable.records) {
+            if (classMember.getKind() == SymbolKind.FUNCTION && !((FunctionType) classMember.getType()).hasDefinition) {
+                String errorMessage = "Semantic Error - No definition for declared member function at line " +
+                        classMember.getLocation() + ": " + classMember.getName() + "\n";
+                outputError(errorMessage);
+            }
+        }
+    }
+
+    private void classOverloading(SymbolTableRecord record) {}
+
+    private void errorHandling(ASTNode node) {
+        String errorMessage = "Semantic Error - Multiply declared " + node.record.getKind() + " at line " + node.record.getLocation() +
+                ": " + node.record.getName() + "\n";
+
+        // remove error node in AST
+        ASTNode leftSibling = node.leftmostSibling;
+        while (leftSibling != null) {
+            if (leftSibling.rightSibling == node) {
+                leftSibling.rightSibling = node.rightSibling;
+                break;
+            }
+            leftSibling = leftSibling.rightSibling;
+        }
+
+        outputError(errorMessage);
+    }
+
 }
