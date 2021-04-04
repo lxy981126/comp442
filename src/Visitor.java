@@ -1,15 +1,22 @@
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Visitor {
     protected static BufferedWriter errorWriter;
+    protected static HashMap<String, Integer> errors;
 
     Visitor() {}
 
     Visitor(String errorFile) throws IOException {
         if(errorWriter == null) {
             errorWriter = new BufferedWriter(new FileWriter(errorFile));
+        }
+        if (errors == null) {
+            errors = new HashMap<>();
         }
     }
 
@@ -115,14 +122,31 @@ public class Visitor {
     protected void visitFunctionParameter(ASTNode node) {}
     protected void visitProgram(ASTNode node) {}
 
-    protected void outputError(String errorMessage) {
+    public static void outputError() {
         try {
-            System.err.print(errorMessage);
-            errorWriter.write(errorMessage);
-            errorWriter.flush();
+            ArrayList<String> sortedError = new ArrayList<>();
+            while (sortedError.size() < errors.size()) {
+                int minLocation = Integer.MAX_VALUE;
+                String minError = "";
+                for (Map.Entry entry: errors.entrySet()) {
+                    int location = ((Integer) entry.getValue());
+                    if (location < minLocation) {
+                        minLocation = location;
+                        minError = ((String) entry.getKey());
+                    }
+                }
+                sortedError.add(minError);
+            }
+
+            for (String errorMessage: errors.keySet()) {
+                System.err.print(errorMessage);
+                errorWriter.write(errorMessage);
+                errorWriter.flush();
+            }
         }
         catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 }

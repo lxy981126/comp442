@@ -1,38 +1,23 @@
-class POLYNOMIAL {
-	public func evaluate(float x, string str) : string;
-	private func privateFunction(integer a): string;
-	public int memberVar;
+class LINEAR {
+	private float a;
+	private float b;
+
+	public func build(float A, float B) : LINEAR;
 };
 
-class LINEAR inherits POLYNOMIAL {
-	public float memberVar;
-    private func privateFunction(string str): string;
-    public func noDefinition(String str): void;
-};
-
-func POLYNOMIAL::evaluate(float x, string str) : string
+func LINEAR::build(float A, float B) : LINEAR
 {
-    var
-    {
-        float f;
-    }
-    f = 1.2;
-  return ("returned string");
-}
-
-func POLYNOMIAL::noDeclaration(float x, string str) : string
-{
-
+  var
+  {
+    LINEAR new_function;
+  }
+  new_function.a = A;
+  new_function.b = B;
+  return (new_function);
 }
 
 // ====== main ====== //
 main
 {
-    var {
-         integer a;
-         integer b;
-         float c;
-    }
-    //f = 2;
-    a = a*b;
+
 }

@@ -327,6 +327,7 @@ public class Parser {
 
         SemanticCheckingVisitor semanticCheckingVisitor = new SemanticCheckingVisitor();
         currentNode.accept(semanticCheckingVisitor);
+        Visitor.outputError();
     }
 
 }

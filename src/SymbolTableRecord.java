@@ -74,6 +74,20 @@ public class SymbolTableRecord {
         setKind(SymbolKind.CLASS);
     }
 
+    public SymbolTableRecord globalSearch(String name) {
+        SymbolTableRecord result = null;
+        SymbolTable parentTable = parent.parent;
+
+        while (parentTable != null) {
+            result = parentTable.search(name);
+            if (result != null) {
+                break;
+            }
+            parentTable = parentTable.parent;
+        }
+        return result;
+    }
+
     @Override
     public boolean equals(Object o) {
         SymbolTableRecord record = ((SymbolTableRecord) o);

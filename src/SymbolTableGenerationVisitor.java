@@ -389,7 +389,7 @@ public class SymbolTableGenerationVisitor extends Visitor{
                     else {
                         String errorMessage = "Semantic Error - No declaration for declared member function at line " +
                                 record.getLocation() + ": " + record.getName() + "\n";
-                        outputError(errorMessage);
+                        errors.put(errorMessage, record.getLocation());
                     }
                 }
                 if (type.scope == null) {
@@ -407,9 +407,12 @@ public class SymbolTableGenerationVisitor extends Visitor{
                 shadowedMember(record);
                 circularClassDependency(record);
                 memberFunctionDefinition(record);
-            }
-            else if (record.getKind() == SymbolKind.FUNCTION) {
-                classOverloading(record);
+
+                for (SymbolTableRecord classMember:record.getLink().records) {
+                    if (classMember.getKind() == SymbolKind.FUNCTION) {
+                        functionOverloading(classMember);
+                    }
+                }
             }
         }
     }
@@ -425,7 +428,7 @@ public class SymbolTableGenerationVisitor extends Visitor{
                 if (parentClassBody.search(classMember.getName()) != null) {
                     String errorMessage = "Semantic Warning - Shadowed inherited member at line " +
                             classMember.getLocation() + ": " + classMember.getName() + "\n";
-                    outputError(errorMessage);
+                    errors.put(errorMessage, record.getLocation());
                 }
             }
         }
@@ -442,7 +445,7 @@ public class SymbolTableGenerationVisitor extends Visitor{
                 if (parentInheritedClass.equals(record.getName())) {
                     String errorMessage = "Semantic Error - Circular class dependency at line " +
                             record.getLocation() + ": " + record.getName() + "\n";
-                    outputError(errorMessage);
+                    errors.put(errorMessage, record.getLocation());
                 }
             }
         }
@@ -454,12 +457,18 @@ public class SymbolTableGenerationVisitor extends Visitor{
             if (classMember.getKind() == SymbolKind.FUNCTION && !((FunctionType) classMember.getType()).hasDefinition) {
                 String errorMessage = "Semantic Error - No definition for declared member function at line " +
                         classMember.getLocation() + ": " + classMember.getName() + "\n";
-                outputError(errorMessage);
+                errors.put(errorMessage, record.getLocation());
             }
         }
     }
 
-    private void classOverloading(SymbolTableRecord record) {}
+    private void functionOverloading(SymbolTableRecord record) {
+        if (record.globalSearch(record.getName()) != null) {
+            String errorMessage = "Semantic Warning - Function overloading at line " +
+                    record.getLocation() + ": " + record.getName() + "\n";
+            errors.put(errorMessage, record.getLocation());
+        }
+    }
 
     private void errorHandling(ASTNode node) {
         String errorMessage = "Semantic Error - Multiply declared " + node.record.getKind() + " at line " + node.record.getLocation() +
@@ -475,7 +484,7 @@ public class SymbolTableGenerationVisitor extends Visitor{
             leftSibling = leftSibling.rightSibling;
         }
 
-        outputError(errorMessage);
+        errors.put(errorMessage, node.record.getLocation());
     }
 
 }

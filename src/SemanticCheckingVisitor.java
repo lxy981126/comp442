@@ -7,7 +7,9 @@ public class SemanticCheckingVisitor extends Visitor{
     protected void visitId(ASTNode node) {
         node.record = node.table.search(node.token.lexeme);
         if (node.record == null) {
-            outputError("Semantic Error - Use of undeclared variable: " + node.token.lexeme + "(line " + node.token.location + ")\n");
+            String errorMessage = "Semantic Error - Use of undeclared variable: " + node.token.lexeme +
+                    "(line " + node.token.location + ")\n";
+            errors.put(errorMessage, node.token.location);
         }
         else {
             node.record.setLocation(node.token.location);
@@ -86,17 +88,30 @@ public class SemanticCheckingVisitor extends Visitor{
 
     @Override
     public void visitAssignStatement(ASTNode node) {
+        //todo: change lhs to Arraylist?
         SymbolTableRecord lhs = null;
         SymbolTableRecord rhs = null;
 
         ASTNode child = node.leftmostChild;
         while (child != null) {
-            child.accept(this);
 
             if (child.type == ASTNodeType.ID) {
-                lhs = child.record;
+                if (lhs == null)
+                {
+                    child.accept(this);
+                    lhs = child.record;
+                }
+                else {
+                    SymbolTableRecord classMember = child.table.search(lhs.getName());
+                    if (classMember == null) {
+                        String errorMessage = "Semantic Error - Use of undeclared variable: " + child.record.getName() +
+                                "(line " + node.token.location + ")\n";
+                        errors.put(errorMessage, node.token.location);
+                    }
+                }
             }
             if (child.type == ASTNodeType.EXPRESSION) {
+                child.accept(this);
                 rhs = child.record;
             }
             child = child.rightSibling;
@@ -173,7 +188,7 @@ public class SemanticCheckingVisitor extends Visitor{
                 name2 + "(line " + location2 + ")\n";
 
         if (!type1.equals(type2)) {
-            outputError(errorMessage);
+            errors.put(errorMessage, location1);
         }
     }
 
