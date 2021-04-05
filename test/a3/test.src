@@ -5,14 +5,21 @@ class LINEAR {
 	public func build(float A, float B) : LINEAR;
 };
 
+func freeFunction(integer i) : void
+{
+
+}
+
+
 func LINEAR::build(float A, float B) : LINEAR
 {
   var
   {
     LINEAR new_function;
+    LINEAR c;
   }
-  new_function.a = A;
-  new_function.b = B;
+  new_function.build(2.8, 3.5);
+  freeFunction(1);
   return (new_function);
 }
 

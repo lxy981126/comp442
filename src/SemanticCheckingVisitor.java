@@ -1,4 +1,3 @@
-import java.io.IOException;
 import java.util.ArrayList;
 
 public class SemanticCheckingVisitor extends Visitor{
@@ -30,7 +29,7 @@ public class SemanticCheckingVisitor extends Visitor{
         node.record.setLocation(node.token.location);
 
         if (node.token.getType() == TokenType.INTEGER_NUMBER) {
-            ((VariableType) node.record.getType()).className = "int";
+            ((VariableType) node.record.getType()).className = "integer";
         }
         else if (node.token.getType() == TokenType.FLOAT_NUMBER) {
             ((VariableType) node.record.getType()).className = "float";
@@ -44,7 +43,89 @@ public class SemanticCheckingVisitor extends Visitor{
 
     @Override
     protected void visitFunctionOrVariable(ASTNode node) {
-        iterateChildren(node);
+        ArrayList<ASTNode> nodes = new ArrayList<>();
+        ASTNode parameter = null;
+        boolean isFunctionCall = false;
+
+        ASTNode child = node.leftmostChild;
+        while (child != null) {
+            if (child.type == ASTNodeType.ID) {
+                nodes.add(child);
+            }
+            if (child.type == ASTNodeType.APARAM_LIST) {
+                isFunctionCall = true;
+                parameter = child;
+            }
+            child = child.rightSibling;
+        }
+
+        if (isFunctionCall) {
+            node.record = functionCall(nodes, parameter);
+        }
+        else {
+            for (ASTNode idNode: nodes) {
+                idNode.accept(this);
+                node.record = idNode.record;
+            }
+        }
+    }
+
+    private SymbolTableRecord functionCall(ArrayList<ASTNode> idNodes, ASTNode parameterList) {
+        SymbolTableRecord returnRecord = new SymbolTableRecord(parameterList.table);
+        SymbolTableRecord functionRecord = null;
+        SymbolTable table;
+        if (idNodes.size() == 1) {
+            table = getParentTable(parameterList.table);
+        }
+        else {
+            table = idNodes.get(idNodes.size() - 1).record.getParent();
+        }
+
+        for (int i = idNodes.size() - 1; i >= 0; i--) {
+            ASTNode idNode = idNodes.get(i);
+            SymbolTableRecord childRecord = table.search(idNode.token.lexeme);
+
+            if (childRecord == null) {
+                String errorMessage = "Semantic Error - Use of undeclared variable: " + idNode.token.lexeme +
+                        "(line " + idNode.record.getLocation() + ")\n";
+                errors.put(errorMessage, idNode.record.getLocation());
+            }
+            else {
+                functionRecord = childRecord;
+                table = table.parent;
+            }
+        }
+
+        FunctionType functionType = ((FunctionType) functionRecord.getType());
+        returnRecord.setType(functionType.returnType);
+        ArrayList<VariableType> functionParameters = functionType.parameters;
+        ArrayList<VariableType> givenParameters = new ArrayList<>();
+
+        ASTNode parameter = parameterList.leftmostChild;
+        while (parameter != null) {
+            parameter.accept(this);
+            givenParameters.add(((VariableType) parameter.record.getType()));
+            parameter = parameter.rightSibling;
+        }
+
+        if (givenParameters.size() != functionParameters.size()) {
+            String errorMessage = "Semantic Error - Wrong number of parameter: " + functionRecord.getName() +
+                    "(line " + functionRecord.getLocation() + ")\n";
+            errors.put(errorMessage, functionRecord.getLocation());
+            return returnRecord;
+        }
+
+        for (int i = 0; i < functionParameters.size(); i++) {
+            VariableType givenParameter = givenParameters.get(i);
+            VariableType functionParameter = functionParameters.get(i);
+            if (!givenParameter.equals(functionParameter)) {
+                String errorMessage = "Semantic Error - Wrong type of parameter: " + givenParameter +
+                        "(line " + functionRecord.getLocation() + ")\n";
+                errors.put(errorMessage, functionRecord.getLocation());
+            }
+        }
+
+        return returnRecord;
     }
 
     @Override
@@ -88,33 +169,46 @@ public class SemanticCheckingVisitor extends Visitor{
 
     @Override
     public void visitAssignStatement(ASTNode node) {
-        //todo: change lhs to Arraylist?
+        ArrayList<ASTNode> lhsList = new ArrayList<>();
         SymbolTableRecord lhs = null;
         SymbolTableRecord rhs = null;
+        boolean isFunctionCall = false;
+        ASTNode parameter = null;
 
         ASTNode child = node.leftmostChild;
         while (child != null) {
-
             if (child.type == ASTNodeType.ID) {
-                if (lhs == null)
-                {
-                    child.accept(this);
-                    lhs = child.record;
-                }
-                else {
-                    SymbolTableRecord classMember = child.table.search(lhs.getName());
-                    if (classMember == null) {
-                        String errorMessage = "Semantic Error - Use of undeclared variable: " + child.record.getName() +
-                                "(line " + node.token.location + ")\n";
-                        errors.put(errorMessage, node.token.location);
-                    }
-                }
+                lhsList.add(child);
             }
-            if (child.type == ASTNodeType.EXPRESSION) {
+            else if (child.type == ASTNodeType.EXPRESSION) {
                 child.accept(this);
                 rhs = child.record;
             }
+            else if (child.type == ASTNodeType.APARAM_LIST) {
+                isFunctionCall = true;
+                parameter = child;
+            }
             child = child.rightSibling;
+        }
+
+        if (isFunctionCall) {
+            functionCall(lhsList, parameter);
+            return;
+        }
+
+        SymbolTable table = lhsList.get(lhsList.size() - 1).record.getParent();
+        for (int i = lhsList.size() - 1; i >= 0; i--) {
+            ASTNode idNode = lhsList.get(i);
+            SymbolTableRecord childRecord = table.search(idNode.token.lexeme);
+            if (childRecord == null) {
+                String errorMessage = "Semantic Error - Use of undeclared variable: " + idNode.token.lexeme +
+                        "(line " + idNode.record.getLocation() + ")\n";
+                errors.put(errorMessage, idNode.record.getLocation());
+            }
+            else {
+                lhs = childRecord;
+                table = table.parent;
+            }
         }
 
         if (lhs != null && rhs != null) {
@@ -161,6 +255,16 @@ public class SemanticCheckingVisitor extends Visitor{
     }
 
     @Override
+    protected void visitArrayParameterList(ASTNode node) {
+        iterateChildren(node);
+    }
+
+    @Override
+    protected void visitArrayParameter(ASTNode node) {
+        iterateChildren(node);
+    }
+
+    @Override
     protected void visitProgram(ASTNode node) {
         iterateChildren(node);
     }
@@ -190,6 +294,13 @@ public class SemanticCheckingVisitor extends Visitor{
         if (!type1.equals(type2)) {
             errors.put(errorMessage, location1);
         }
+    }
+
+    private SymbolTable getParentTable(SymbolTable table) {
+        while (table.parent != null) {
+            table = table.parent;
+        }
+        return table;
     }
 
 }

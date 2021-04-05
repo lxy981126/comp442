@@ -27,7 +27,7 @@
 
 <FuncDecl> ::= 'func' #id# 'id' '(' <FParams> ')' ':' <FuncDeclTail> ';' #funcDecl#
 <FuncDeclTail> ::= <Type>
-<FuncDeclTail> ::= 'void' #type#
+<FuncDeclTail> ::= #type# 'void'
 
 <FParams> ::= <Type> #id# 'id' <ArraySizeRept> #arraySizeList# #fParam# <FParamsTail> #fParamList#
 <FParams> ::= EPSILON
@@ -98,8 +98,8 @@
 <FuncOrVarIdnestTail> ::= '.' #id# 'id' <FuncOrVarIdnest>
 <FuncOrVarIdnestTail> ::= EPSILON
 
-<AParams> ::= <Expr> <AParamsTail> #aParamList#
-<AParams> ::= EPSILON #aParamList#
+<AParams> ::= <Expr> #aParam# <AParamsTail> #aParamList#
+<AParams> ::= EPSILON
 <AParamsTail> ::= ',' <Expr> #aParam# <AParamsTail>
 <AParamsTail> ::= EPSILON
 

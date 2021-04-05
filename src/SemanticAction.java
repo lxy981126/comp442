@@ -153,7 +153,7 @@ public class SemanticAction {
             ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
                     Arrays.asList(ASTNodeType.NUM, ASTNodeType.STRING, ASTNodeType.EXPRESSION, ASTNodeType.NOT,
                     ASTNodeType.SIGN, ASTNodeType.FUNCTION_OR_VARIABLE));
-            doAction(stack, symbol, listItemTypes);
+            factorAction(stack, symbol, listItemTypes);
         }
         else if (symbol.name.equals("funcOrVar")) {
             funcOrVarAction(stack, symbol);
@@ -164,7 +164,7 @@ public class SemanticAction {
         }
         else if (symbol.name.equals("aParam")) {
             ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(Arrays.asList(ASTNodeType.EXPRESSION));
-            doAction(stack, symbol, listItemTypes);
+            actionInOrder(stack, symbol, listItemTypes);
         }
         else if (symbol.name.equals("expr")) {
             ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
@@ -240,28 +240,36 @@ public class SemanticAction {
 
     private static void funcOrVarAction(Stack<ASTNode> stack, SemanticSymbol symbol) {
         ASTNode funcOrVar = new ASTNode(symbol);
+        int idToBeAdopted = 1;
 
         ASTNode child = stack.empty()? null:stack.peek();
-        if (child.type == ASTNodeType.ID) {
-            funcOrVar.adoptChild(child);
-            stack.pop();
-            child = stack.empty()? null:stack.peek();
-        }
 
-        boolean canAdoptId = false;
         while (child != null && (child.type == ASTNodeType.INDEX_LIST ||
                 child.type == ASTNodeType.APARAM_LIST ||
-                (child.type == ASTNodeType.ID && canAdoptId))) {
+                (child.type == ASTNodeType.ID && idToBeAdopted > 0))) {
             funcOrVar.adoptChild(child);
             if (child.type == ASTNodeType.INDEX_LIST || child.type == ASTNodeType.APARAM_LIST) {
-                canAdoptId = true;
+                idToBeAdopted++;
             }
             else {
-                canAdoptId = false;
+                idToBeAdopted--;
             }
             stack.pop();
             child = stack.empty()? null:stack.peek();
         }
         stack.push(funcOrVar);
+    }
+
+    private static void factorAction(Stack<ASTNode> stack,
+                              SemanticSymbol symbol,
+                              ArrayList<ASTNodeType> listItemTypes) {
+        ASTNode factorNode = new ASTNode(symbol);
+
+        ASTNode child = stack.empty()? null:stack.peek();
+        if (listItemTypes.contains(child.type)) {
+            factorNode.adoptChild(child);
+            stack.pop();
+        }
+        stack.push(factorNode);
     }
 }
