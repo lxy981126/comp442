@@ -419,6 +419,14 @@ public class SymbolTableGenerationVisitor extends Visitor{
                     }
                 }
             }
+            else if (record.getKind() == SymbolKind.FUNCTION) {
+                functionOverloading(record);
+                for (SymbolTableRecord variableRecord:record.getLink().records) {
+                    if (variableRecord.getKind() == SymbolKind.VARIABLE || variableRecord.getKind() == SymbolKind.PARAMETER) {
+                        undeclaredClass(variableRecord);
+                    }
+                }
+            }
         }
     }
 
@@ -434,7 +442,7 @@ public class SymbolTableGenerationVisitor extends Visitor{
                 if (memberRecord != null && memberRecord.getKind() != SymbolKind.FUNCTION) {
                     String errorMessage = "Semantic Warning - Shadowed inherited member at line " +
                             classMember.getLocation() + ": " + classMember.getName() + "\n";
-                    errors.put(errorMessage, record.getLocation());
+                    errors.put(errorMessage, classMember.getLocation());
                 }
             }
         }
@@ -463,16 +471,32 @@ public class SymbolTableGenerationVisitor extends Visitor{
             if (classMember.getKind() == SymbolKind.FUNCTION && !((FunctionType) classMember.getType()).hasDefinition) {
                 String errorMessage = "Semantic Error - No definition for declared member function at line " +
                         classMember.getLocation() + ": " + classMember.getName() + "\n";
-                errors.put(errorMessage, record.getLocation());
+                errors.put(errorMessage, classMember.getLocation());
             }
         }
     }
 
     private void functionOverloading(SymbolTableRecord record) {
-        if (record.globalSearch(record.getName()) != null) {
+        if (record.overloaded(record)) {
             String errorMessage = "Semantic Warning - Function overloading at line " +
                     record.getLocation() + ": " + record.getName() + "\n";
             errors.put(errorMessage, record.getLocation());
+        }
+    }
+
+    private void undeclaredClass(SymbolTableRecord record) {
+        VariableType variableType = ((VariableType) record.getType());
+        String className = variableType.className;
+
+        if (!className.equals("integer") &&
+                !className.equals("float") &&
+                !className.equals("string")) {
+            SymbolTableRecord classRecord = record.getParent().globalSearch(className);
+            if (classRecord == null) {
+                String errorMessage = "Semantic Error - Undeclared class at line " +
+                        record.getLocation() + ": " + className + "\n";
+                errors.put(errorMessage, record.getLocation());
+            }
         }
     }
 

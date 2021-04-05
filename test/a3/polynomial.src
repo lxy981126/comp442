@@ -111,7 +111,7 @@ main
 8.5  | | shadowed inherited data member
 9.1  | | Overloaded free function
 9.2  | | Overloaded member function
-9.3  | | Overridden inherited member function
+9.3  |X| Overridden inherited member function
 10.1 | | Type error in expression
 10.2 | | Type error in assignment statement 
 10.3 | | Type error in return statement

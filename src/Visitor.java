@@ -124,8 +124,9 @@ public class Visitor {
 
     public static void outputError() {
         try {
+            int numErrors = errors.size();
             ArrayList<String> sortedError = new ArrayList<>();
-            while (sortedError.size() < errors.size()) {
+            while (sortedError.size() < numErrors) {
                 int minLocation = Integer.MAX_VALUE;
                 String minError = "";
                 for (Map.Entry entry: errors.entrySet()) {
@@ -136,9 +137,10 @@ public class Visitor {
                     }
                 }
                 sortedError.add(minError);
+                errors.remove(minError);
             }
 
-            for (String errorMessage: errors.keySet()) {
+            for (String errorMessage: sortedError) {
                 System.err.print(errorMessage);
                 errorWriter.write(errorMessage);
                 errorWriter.flush();

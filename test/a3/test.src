@@ -1,5 +1,35 @@
-func bubbleSort(integer arr[]) : void
+// ====== Class declarations ====== //
+class POLYNOMIAL inherits LINEAR {
+    public integer shadowed;
+	public func no_definition(float x) : float;
+	public func overloaded_member_func(float a) : string;
+	public func overloaded_member_func(integer i) : string;
+};
+
+class LINEAR inherits POLYNOMIAL {
+    public integer shadowed;
+    private string multiply_class_member;
+    private string multiply_class_member;
+};
+
+class Multiply_class {};
+class Multiply_class {};
+
+// ====== Function Definitions ====== //
+func POLYNOMIAL::no_declaration(integer arr[]) : void {}
+
+func multiply_free_func(integer i) : void {}
+func multiply_free_func(integer i) : void {}
+
+func overloaded_free_func(float f) : void {}
+func overloaded_free_func(integer i) : void {}
+
+func correct_func(integer i) : void {}
+func arr_parameter(integer arr[]) : void {}
+
+func type_return(integer i) : string
 {
+    return (0);
 }
 
 // ====== main ====== //
@@ -7,7 +37,62 @@ main
 {
     var
     {
+        integer multiply_id;
+        integer multiply_id;
+        integer int_num;
+        float float_num;
+        POLYNOMIAL polynomial;
+        UNDECLARED_CLASS undeclared_class;
         integer arr[7];
     }
-    bubbleSort(arr);
+
+    int_num = 0.1;
+    int_num = int_num * float_num;
+
+    undeclared_var = 0;
+    undeclared_func(1);
+    polynomial.undeclared_member = 0;
+    polynomial.undeclared_member_func(0);
+
+    correct_func(0,1);
+    correct_func(0.1);
+
+    arr[0.1] = 1;
+
+    int_num.i = 1;
 }
+
+
+/*
+1.   |X| global symbol table
+2.   |X| class symbol table
+3.1  | | class data member
+3.2  | | function's local variable
+4.1  | | free function
+4.2  | | member function
+6.1  |X| undeclared member function definition
+6.2  |X| undefined member function declaration
+8.1  |X| multiply declared class
+8.2  |X| multiply declared free function
+8.3  |X| multiply declared identifier in class
+8.4  |X| multiply declared identifier in function
+8.5  |X| shadowed inherited data member
+9.1  |X| Overloaded free function
+9.2  |X| Overloaded member function
+9.3  | | Overridden inherited member function
+10.1 |X| Type error in expression
+10.2 |X| Type error in assignment statement
+10.3 |X| Type error in return statement
+11.1 |X| Undeclared local variable
+11.2 |X| Undeclared data member
+11.3 |X| Undeclared member function
+11.4 |X| Undeclared free function
+11.5 |X| Undeclared class
+12.1 |X| Function call with wrong number of parameters
+12.2 |X| Function call with wrong type of parameters
+13.1 | | Use of array with wrong number of dimensions //todo
+13.2 |X| Array index is not an integer
+13.3 | | Array parameter using wrong number of dimensions //todo
+14.1 |X| Circular class dependency
+15.1 |X| "." operator used on non-class type
+*/

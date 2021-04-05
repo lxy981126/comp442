@@ -74,18 +74,18 @@ public class SymbolTableRecord {
         setKind(SymbolKind.CLASS);
     }
 
-    public SymbolTableRecord globalSearch(String name) {
-        SymbolTableRecord result = null;
-        SymbolTable parentTable = parent.parent;
+    public boolean overloaded(SymbolTableRecord record) {
+        SymbolTableRecord result;
+        SymbolTable parentTable = parent;
 
         while (parentTable != null) {
-            result = parentTable.search(name);
-            if (result != null) {
-                break;
+            result = parentTable.search(record.getName());
+            if (result != null && !result.equals(record)) {
+                return true;
             }
             parentTable = parentTable.parent;
         }
-        return result;
+        return false;
     }
 
     @Override

@@ -91,8 +91,8 @@ public class SemanticCheckingVisitor extends Visitor{
 
             if (childRecord == null) {
                 String errorMessage = "Semantic Error - Use of undeclared variable: " + idNode.token.lexeme +
-                        "(line " + idNode.record.getLocation() + ")\n";
-                errors.put(errorMessage, idNode.record.getLocation());
+                        "(line " + idNode.token.location + ")\n";
+                errors.put(errorMessage, idNode.token.location);
                 return null;
             }
             else {
@@ -116,8 +116,8 @@ public class SemanticCheckingVisitor extends Visitor{
 
         if (givenParameters.size() != functionParameters.size()) {
             String errorMessage = "Semantic Error - Wrong number of parameter: " + functionRecord.getName() +
-                    "(line " + functionRecord.getLocation() + ")\n";
-            errors.put(errorMessage, functionRecord.getLocation());
+                    "(line " + parameterList.leftmostChild.record.getLocation() + ")\n";
+            errors.put(errorMessage, parameterList.leftmostChild.record.getLocation());
             return returnRecord;
         }
 
@@ -126,8 +126,8 @@ public class SemanticCheckingVisitor extends Visitor{
             VariableType functionParameter = functionParameters.get(i);
             if (!givenParameter.equals(functionParameter)) {
                 String errorMessage = "Semantic Error - Wrong type of parameter: " + givenParameter +
-                        "(line " + functionRecord.getLocation() + ")\n";
-                errors.put(errorMessage, functionRecord.getLocation());
+                        "(line " + parameterList.leftmostChild.record.getLocation() + ")\n";
+                errors.put(errorMessage, parameterList.leftmostChild.record.getLocation());
             }
         }
 
@@ -215,8 +215,8 @@ public class SemanticCheckingVisitor extends Visitor{
                 SymbolTableRecord childRecord = table.globalSearch(childNode.token.lexeme);
                 if (childRecord == null) {
                     String errorMessage = "Semantic Error - Use of undeclared variable: " + childNode.token.lexeme +
-                            "(line " + childNode.record.getLocation() + ")\n";
-                    errors.put(errorMessage, childNode.record.getLocation());
+                            "(line " + childNode.token.location + ")\n";
+                    errors.put(errorMessage, childNode.token.location);
                 }
                 else {
                     lhs = childRecord;
@@ -246,11 +246,10 @@ public class SemanticCheckingVisitor extends Visitor{
             }
         }
 
-        if (lhsType == null) {
-            lhsType = ((VariableType) lhs.getType());
-        }
-
         if (lhs != null && rhs != null) {
+            if (lhsType == null) {
+                lhsType = ((VariableType) lhs.getType());
+            }
             checkType(lhs.getName(), rhs.getName(), lhsType, rhs.getType(), lhs.getLocation(), rhs.getLocation());
         }
     }
@@ -323,9 +322,6 @@ public class SemanticCheckingVisitor extends Visitor{
     private void iterateChildren(ASTNode node) {
         ASTNode child = node.leftmostChild;
         while (child != null) {
-//            if (child.type != ASTNodeType.RETURN_STATEMENT) {
-//                child.table = node.table;
-//            }
             child.accept(this);
             node.record = child.record;
             child = child.rightSibling;
@@ -342,10 +338,9 @@ public class SemanticCheckingVisitor extends Visitor{
     }
 
     private void checkType(String name1, String name2, SymbolType type1, SymbolType type2, int location1, int location2) {
-        String errorMessage = "Semantic Error - Mismatch type: " + name1 + "(line " + location1 + "), " +
-                name2 + "(line " + location2 + ")\n";
-
         if (!type1.equals(type2)) {
+            String errorMessage = "Semantic Error - Mismatch type: " + name1 + "(line " + location1 + "), " +
+                    name2 + "(line " + location2 + ")\n";
             errors.put(errorMessage, location1);
         }
     }

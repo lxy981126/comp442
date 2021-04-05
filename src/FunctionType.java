@@ -13,8 +13,8 @@ public class FunctionType extends SymbolType {
     @Override
     public boolean equals(Object o) {
         FunctionType functionType = ((FunctionType) o);
-        if (returnType.equals(functionType.returnType) &&
-                scope.equals(functionType.scope) &&
+        if ((returnType == null && functionType.returnType == null ||returnType.equals(functionType.returnType)) &&
+                (scope == null && functionType.scope == null || scope.equals(functionType.scope)) &&
                 parameters.equals(functionType.parameters)) {
             return true;
         }
