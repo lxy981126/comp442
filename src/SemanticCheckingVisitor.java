@@ -226,22 +226,24 @@ public class SemanticCheckingVisitor extends Visitor{
             else if (childNode.type == ASTNodeType.INDEX_LIST) {
                 indexList++;
                 childNode.accept(this);
-
                 SymbolTableRecord indexRecord = childNode.record;
+
+                lhsType = new VariableType(((VariableType) lhs.getType()));
+                if (indexRecord == null || lhsType.dimension.size() < indexList) {
+                    String errorMessage = "Semantic Error - Use of array with wrong number of dimensions: " + lhs.getName() +
+                            "(line " + rhs.getLocation() + ")\n";
+                    errors.put(errorMessage, rhs.getLocation());
+                    return;
+                }
+                else {
+                    lhsType.dimension.remove(0);
+                }
+
                 if (!((VariableType) indexRecord.getType()).className.equals("integer")) {
                     String errorMessage = "Semantic Error - Array index is not an integer: " + lhs.getName() +
                             "(line " + indexRecord.getLocation() + ")\n";
                     errors.put(errorMessage, indexRecord.getLocation());
-                }
-
-                lhsType = new VariableType(((VariableType) lhs.getType()));
-                if (lhsType.dimension.size() < indexList) {
-                    String errorMessage = "Semantic Error - Use of array with wrong number of dimensions: " + lhs.getName() +
-                            "(line " + indexRecord.getLocation() + ")\n";
-                    errors.put(errorMessage, indexRecord.getLocation());
-                }
-                else {
-                    lhsType.dimension.remove(0);
+                    return;
                 }
             }
         }
