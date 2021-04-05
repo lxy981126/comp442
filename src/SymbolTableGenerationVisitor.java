@@ -43,7 +43,7 @@ public class SymbolTableGenerationVisitor extends Visitor{
 
     @Override
     protected void visitIndexList(ASTNode node) {
-        //todo
+        collectLeafRecord(node);
     }
 
     @Override
@@ -96,6 +96,11 @@ public class SymbolTableGenerationVisitor extends Visitor{
     @Override
     protected void visitStatementList(ASTNode node) {
         iterateChildren(node);
+    }
+
+    @Override
+    protected void visitStatementBlock(ASTNode node) {
+        collectLeafRecord(node);
     }
 
     @Override
@@ -425,7 +430,8 @@ public class SymbolTableGenerationVisitor extends Visitor{
             SymbolTable parentClassBody = record.getParent().search(parentClassName).getLink();
             for (SymbolTableRecord classMember:classTable.records) {
 
-                if (parentClassBody.search(classMember.getName()) != null) {
+                SymbolTableRecord memberRecord = parentClassBody.search(classMember.getName());
+                if (memberRecord != null && memberRecord.getKind() != SymbolKind.FUNCTION) {
                     String errorMessage = "Semantic Warning - Shadowed inherited member at line " +
                             classMember.getLocation() + ": " + classMember.getName() + "\n";
                     errors.put(errorMessage, record.getLocation());

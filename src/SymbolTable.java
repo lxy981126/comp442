@@ -20,6 +20,9 @@ public class SymbolTable {
     }
 
     public boolean insert(SymbolTableRecord record) {
+        if (record.getName() == null) {
+            System.out.println(record);
+        }
         if (records.contains(record)) {
             return true;
         }
@@ -36,6 +39,23 @@ public class SymbolTable {
             }
         }
         return null;
+    }
+
+    public SymbolTableRecord globalSearch(String name) {
+        SymbolTableRecord result = search(name);
+        if (result != null) {
+            return result;
+        }
+
+        SymbolTable parentTable = parent;
+        while (parentTable != null) {
+            result = parentTable.search(name);
+            if (result != null) {
+                break;
+            }
+            parentTable = parentTable.parent;
+        }
+        return result;
     }
 
     @Override

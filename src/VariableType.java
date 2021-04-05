@@ -8,6 +8,11 @@ public class VariableType extends SymbolType {
         this.dimension = new ArrayList<>();
     }
 
+    VariableType(VariableType type) {
+        this.className = new String(type.className);
+        this.dimension = new ArrayList<>(type.dimension);
+    }
+
     VariableType(String name) {
         super();
         this.className = name;
@@ -17,7 +22,7 @@ public class VariableType extends SymbolType {
     @Override
     public boolean equals(Object o) {
         VariableType variableType = ((VariableType) o);
-        if (className.equals(variableType.className) && dimension.equals(variableType.dimension)) {
+        if (className.equals(variableType.className) && dimension.size() == variableType.dimension.size()) {
             return true;
         }
         return false;

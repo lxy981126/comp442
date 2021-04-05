@@ -4,7 +4,7 @@ public class SemanticCheckingVisitor extends Visitor{
 
     @Override
     protected void visitId(ASTNode node) {
-        node.record = node.table.search(node.token.lexeme);
+        node.record = getTableFromParentNode(node).globalSearch(node.token.lexeme);
         if (node.record == null) {
             String errorMessage = "Semantic Error - Use of undeclared variable: " + node.token.lexeme +
                     "(line " + node.token.location + ")\n";
@@ -37,6 +37,9 @@ public class SemanticCheckingVisitor extends Visitor{
     }
 
     @Override
+    protected void visitIndexList(ASTNode node) {iterateChildren(node);}
+
+    @Override
     protected void visitFactor(ASTNode node) {
         iterateChildren(node);
     }
@@ -49,7 +52,8 @@ public class SemanticCheckingVisitor extends Visitor{
 
         ASTNode child = node.leftmostChild;
         while (child != null) {
-            if (child.type == ASTNodeType.ID) {
+            child.table = node.table;
+            if (child.type == ASTNodeType.ID || child.type == ASTNodeType.INDEX_LIST) {
                 nodes.add(child);
             }
             if (child.type == ASTNodeType.APARAM_LIST) {
@@ -89,6 +93,7 @@ public class SemanticCheckingVisitor extends Visitor{
                 String errorMessage = "Semantic Error - Use of undeclared variable: " + idNode.token.lexeme +
                         "(line " + idNode.record.getLocation() + ")\n";
                 errors.put(errorMessage, idNode.record.getLocation());
+                return null;
             }
             else {
                 functionRecord = childRecord;
@@ -103,6 +108,7 @@ public class SemanticCheckingVisitor extends Visitor{
 
         ASTNode parameter = parameterList.leftmostChild;
         while (parameter != null) {
+            parameter.table = parameterList.table;
             parameter.accept(this);
             givenParameters.add(((VariableType) parameter.record.getType()));
             parameter = parameter.rightSibling;
@@ -134,6 +140,7 @@ public class SemanticCheckingVisitor extends Visitor{
 
         ASTNode child = node.leftmostChild;
         while (child != null) {
+            child.table = node.table;
             child.accept(this);
             if (child.type == ASTNodeType.FACTOR) {
                 records.add(child.record);
@@ -151,6 +158,7 @@ public class SemanticCheckingVisitor extends Visitor{
 
         ASTNode child = node.leftmostChild;
         while (child != null) {
+            child.table = node.table;
             child.accept(this);
             if (child.type == ASTNodeType.TERM) {
                 records.add(child.record);
@@ -177,7 +185,8 @@ public class SemanticCheckingVisitor extends Visitor{
 
         ASTNode child = node.leftmostChild;
         while (child != null) {
-            if (child.type == ASTNodeType.ID) {
+            child.table = node.table;
+            if (child.type == ASTNodeType.ID || child.type == ASTNodeType.INDEX_LIST) {
                 lhsList.add(child);
             }
             else if (child.type == ASTNodeType.EXPRESSION) {
@@ -192,27 +201,57 @@ public class SemanticCheckingVisitor extends Visitor{
         }
 
         if (isFunctionCall) {
-            functionCall(lhsList, parameter);
+            node.record = functionCall(lhsList, parameter);
             return;
         }
 
+        VariableType lhsType = null;
+        int indexList = 0;
         SymbolTable table = lhsList.get(lhsList.size() - 1).record.getParent();
         for (int i = lhsList.size() - 1; i >= 0; i--) {
-            ASTNode idNode = lhsList.get(i);
-            SymbolTableRecord childRecord = table.search(idNode.token.lexeme);
-            if (childRecord == null) {
-                String errorMessage = "Semantic Error - Use of undeclared variable: " + idNode.token.lexeme +
-                        "(line " + idNode.record.getLocation() + ")\n";
-                errors.put(errorMessage, idNode.record.getLocation());
+            ASTNode childNode = lhsList.get(i);
+            if (childNode.type == ASTNodeType.ID)
+            {
+                SymbolTableRecord childRecord = table.globalSearch(childNode.token.lexeme);
+                if (childRecord == null) {
+                    String errorMessage = "Semantic Error - Use of undeclared variable: " + childNode.token.lexeme +
+                            "(line " + childNode.record.getLocation() + ")\n";
+                    errors.put(errorMessage, childNode.record.getLocation());
+                }
+                else {
+                    lhs = childRecord;
+                    table = table.parent;
+                }
             }
-            else {
-                lhs = childRecord;
-                table = table.parent;
+            else if (childNode.type == ASTNodeType.INDEX_LIST) {
+                indexList++;
+                childNode.accept(this);
+
+                SymbolTableRecord indexRecord = childNode.record;
+                if (!((VariableType) indexRecord.getType()).className.equals("integer")) {
+                    String errorMessage = "Semantic Error - Array index is not an integer: " + lhs.getName() +
+                            "(line " + indexRecord.getLocation() + ")\n";
+                    errors.put(errorMessage, indexRecord.getLocation());
+                }
+
+                lhsType = new VariableType(((VariableType) lhs.getType()));
+                if (lhsType.dimension.size() < indexList) {
+                    String errorMessage = "Semantic Error - Use of array with wrong number of dimensions: " + lhs.getName() +
+                            "(line " + indexRecord.getLocation() + ")\n";
+                    errors.put(errorMessage, indexRecord.getLocation());
+                }
+                else {
+                    lhsType.dimension.remove(0);
+                }
             }
         }
 
+        if (lhsType == null) {
+            lhsType = ((VariableType) lhs.getType());
+        }
+
         if (lhs != null && rhs != null) {
-            checkType(lhs.getName(), rhs.getName(), lhs.getType(), rhs.getType(), lhs.getLocation(), rhs.getLocation());
+            checkType(lhs.getName(), rhs.getName(), lhsType, rhs.getType(), lhs.getLocation(), rhs.getLocation());
         }
     }
 
@@ -224,6 +263,7 @@ public class SemanticCheckingVisitor extends Visitor{
 
         ASTNode child = node.leftmostChild;
         while (child != null) {
+            child.table = node.table;
             child.accept(this);
             givenRecord = child.record;
             child = child.rightSibling;
@@ -266,12 +306,26 @@ public class SemanticCheckingVisitor extends Visitor{
 
     @Override
     protected void visitProgram(ASTNode node) {
-        iterateChildren(node);
+        ASTNode child = node.leftmostChild;
+        while (child != null) {
+            if (child.type == ASTNodeType.FUNCTION_BODY) {
+                child.table = node.table.globalSearch("main").getLink();
+            }
+            else {
+                child.table = node.table;
+            }
+            child.accept(this);
+            node.record = child.record;
+            child = child.rightSibling;
+        }
     }
 
     private void iterateChildren(ASTNode node) {
         ASTNode child = node.leftmostChild;
         while (child != null) {
+//            if (child.type != ASTNodeType.RETURN_STATEMENT) {
+//                child.table = node.table;
+//            }
             child.accept(this);
             node.record = child.record;
             child = child.rightSibling;
@@ -299,6 +353,16 @@ public class SemanticCheckingVisitor extends Visitor{
     private SymbolTable getParentTable(SymbolTable table) {
         while (table.parent != null) {
             table = table.parent;
+        }
+        return table;
+    }
+
+    private SymbolTable getTableFromParentNode(ASTNode node) {
+        ASTNode parent = node;
+        SymbolTable table = parent.table;
+        while (table == null && parent != null) {
+            parent = parent.parent;
+            table = parent.table;
         }
         return table;
     }

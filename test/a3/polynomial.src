@@ -23,7 +23,7 @@ class QUADRATIC inherits POLYNOMIAL {
 // ====== Function Definitions ====== //
 func POLYNOMIAL::evaluate(float x) : float
 {
-  return (0);
+  return (0.0);
 }
 
 func LINEAR::evaluate(float x) : float 

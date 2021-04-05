@@ -88,8 +88,8 @@
 <Factor> ::= #num# 'floatnum' #factor#
 <Factor> ::= #str# 'stringlit' #factor#
 <Factor> ::= '(' <Expr> ')' #factor#
-<Factor> ::= #not# 'not' <Factor>
-<Factor> ::= <Sign> <Factor>
+<Factor> ::= #not# 'not' <Factor> #factor#
+<Factor> ::= <Sign> <Factor> #factor#
 <Factor> ::= 'qmark' '[' <Expr> ':' <Expr> ':' <Expr> ']' #factor#
 
 <FuncOrVar> ::= #id# 'id' <FuncOrVarIdnest> #funcOrVar#

@@ -150,10 +150,7 @@ public class SemanticAction {
             doAction(stack, symbol, listItemTypes);
         }
         else if (symbol.name.equals("factor")) {
-            ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
-                    Arrays.asList(ASTNodeType.NUM, ASTNodeType.STRING, ASTNodeType.EXPRESSION, ASTNodeType.NOT,
-                    ASTNodeType.SIGN, ASTNodeType.FUNCTION_OR_VARIABLE));
-            factorAction(stack, symbol, listItemTypes);
+            factorAction(stack, symbol);
         }
         else if (symbol.name.equals("funcOrVar")) {
             funcOrVarAction(stack, symbol);
@@ -261,14 +258,56 @@ public class SemanticAction {
     }
 
     private static void factorAction(Stack<ASTNode> stack,
-                              SemanticSymbol symbol,
-                              ArrayList<ASTNodeType> listItemTypes) {
+                              SemanticSymbol symbol) {
         ASTNode factorNode = new ASTNode(symbol);
 
         ASTNode child = stack.empty()? null:stack.peek();
-        if (listItemTypes.contains(child.type)) {
+        if (child.type == ASTNodeType.NUM ||
+                child.type == ASTNodeType.STRING ||
+                child.type == ASTNodeType.FUNCTION_OR_VARIABLE) {
             factorNode.adoptChild(child);
             stack.pop();
+        }
+        else if (child.type == ASTNodeType.FACTOR){
+            stack.pop();
+            if (!stack.empty() && (stack.peek().type == ASTNodeType.SIGN || stack.peek().type == ASTNodeType.NOT)) {
+                factorNode.adoptChild(child);
+                factorNode.adoptChild(stack.peek());
+                stack.pop();
+            }
+            else {
+                stack.push(child);
+            }
+        }
+        else if (child.type == ASTNodeType.EXPRESSION) {
+            stack.pop();
+            ASTNode expression1 = null;
+            if (!stack.empty()) {
+                expression1 = stack.peek();
+                stack.pop();
+            }
+
+            ASTNode expression2 = null;
+            if (!stack.empty()) {
+                expression2 = stack.peek();
+                stack.pop();
+            }
+
+            if (expression1 != null && expression2 != null &&
+                    expression1.type == ASTNodeType.EXPRESSION && expression2.type == ASTNodeType.EXPRESSION) {
+                factorNode.adoptChild(expression1);
+                factorNode.adoptChild(expression2);
+                factorNode.adoptChild(child);
+            }
+            else {
+                if (expression2 != null) {
+                    stack.push(expression2);
+                }
+                if (expression1 != null) {
+                    stack.push(expression1);
+                }
+                factorNode.adoptChild(child);
+            }
         }
         stack.push(factorNode);
     }
