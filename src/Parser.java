@@ -320,14 +320,17 @@ public class Parser {
                 ("out/" + inputFile + ".outsemanticerrors");
         currentNode.accept(symbolTableCreation);
 
-        BufferedWriter symbolTableWriter = new BufferedWriter(new FileWriter("out/" + inputFile + "Table.csv"));
-        symbolTableWriter.write("name, kind, type, link\n");
-        symbolTableWriter.write(currentNode.table.toString());
-        symbolTableWriter.close();
-
         SemanticCheckingVisitor semanticCheckingVisitor = new SemanticCheckingVisitor();
         currentNode.accept(semanticCheckingVisitor);
         Visitor.outputError();
+
+        MemorySizeComputingVisitor memorySizeComputingVisitor = new MemorySizeComputingVisitor();
+        currentNode.accept(memorySizeComputingVisitor);
+
+        BufferedWriter symbolTableWriter = new BufferedWriter(new FileWriter("out/" + inputFile + "Table.csv"));
+        symbolTableWriter.write("name, kind, type, size, link\n");
+        symbolTableWriter.write(currentNode.table.toString());
+        symbolTableWriter.close();
     }
 
 }

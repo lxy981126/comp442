@@ -2,7 +2,7 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        String inputFile = "test/a3/test";
+        String inputFile = "test/a4/test";
         Parser parser = new Parser(inputFile);
 
         boolean success= parser.parse();

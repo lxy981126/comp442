@@ -3,10 +3,19 @@ public class SymbolTableRecord {
     private SymbolKind kind;
     private SymbolType type;
     private SymbolTable link;
-
     private SymbolTable parent;
-
     private int location;
+    private int size;
+
+
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
+    }
+
     public int getLocation() {
         return location;
     }
@@ -99,7 +108,7 @@ public class SymbolTableRecord {
 
     @Override
     public String toString() {
-        String result = name + ", " + kind + ", " + type + ", ";
+        String result = name + ", " + kind + ", " + type + ", " + size + ", ";
 
         if (link != null) {
             result += "\n\n" + link.toString() + "\n";
