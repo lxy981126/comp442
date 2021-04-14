@@ -8,6 +8,7 @@ public class ASTNode {
     Token token;
     SymbolTable table;
     SymbolTableRecord record;
+    int offset;
     int id;
 
     // leaf nodes

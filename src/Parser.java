@@ -331,6 +331,9 @@ public class Parser {
         symbolTableWriter.write("name, kind, type, size, link\n");
         symbolTableWriter.write(currentNode.table.toString());
         symbolTableWriter.close();
+
+        CodeGenerationVisitor codeGenerationVisitor = new CodeGenerationVisitor("out/" + inputFile + ".m");
+        currentNode.accept(codeGenerationVisitor);
     }
 
 }
