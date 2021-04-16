@@ -332,7 +332,7 @@ public class Parser {
         symbolTableWriter.write(currentNode.table.toString());
         symbolTableWriter.close();
 
-        CodeGenerationVisitor codeGenerationVisitor = new CodeGenerationVisitor("out/" + inputFile + ".m");
+        CodeGenerationVisitor codeGenerationVisitor = new CodeGenerationVisitor("out/" + inputFile + ".moon");
         currentNode.accept(codeGenerationVisitor);
     }
 

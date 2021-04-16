@@ -184,6 +184,32 @@ public class CodeGenerationVisitor extends Visitor{
     }
 
     @Override
+    protected void visitWriteStatement(ASTNode node) {
+        iterateChildren(node);
+
+        String expressionRegister = registerPool.pop();
+        String bufferRegister = registerPool.pop();
+
+        executionCode += "% ==== write statement ====\n";
+        executionCode += indent + "lw " + expressionRegister + "," + node.record.getName() + "(r0)\n";
+        executionCode += indent + "addi r14,r0,topaddr\n"; //todo???
+        executionCode += indent + "sw -8(r14)," + expressionRegister + "\n";
+
+        String bufferName = "buffer" + node.id;
+        dataCode += bufferName + " res 20\n";
+        executionCode += indent + "addi " + bufferRegister + ",r0," + bufferName + "\n";
+        executionCode += indent + "sw -12(r14)," + bufferRegister + "\n";
+
+        executionCode += indent + "jl r15, intstr\n";
+        executionCode += indent + "addi r14,r0,topaddr\n"; //todo???
+        executionCode += indent + "sw -8(r14),r13\n";
+        executionCode += indent + "jl r15,putstr\n";
+
+        registerPool.push(expressionRegister);
+        registerPool.push(bufferRegister);
+    }
+
+    @Override
     protected void visitIfStatement(ASTNode node) {
         ASTNode expression = null;
         ASTNode statement1 = null;
@@ -220,6 +246,42 @@ public class CodeGenerationVisitor extends Visitor{
         executionCode += elseBlock + "\n";
         statement2.accept(this);
         executionCode += endIf + "\n";
+
+        registerPool.push(conditionRegister);
+    }
+
+    @Override
+    protected void visitWhileStatement(ASTNode node) {
+        ASTNode expression = null;
+        ASTNode statementBlock = null;
+
+        ASTNode child = node.leftmostChild;
+        while (child != null) {
+            if (child.type == ASTNodeType.EXPRESSION) {
+                expression = child;
+            }
+            else if (child.type == ASTNodeType.STATEMENT_BLOCK) {
+                statementBlock = child;
+            }
+            if (child.record != null) {
+                node.record = child.record;
+            }
+            child = child.rightSibling;
+        }
+
+        String conditionRegister = registerPool.pop();
+        String whileName = "goWhile" + node.id;
+        String endWhileName = "endWhile" + node.id;
+
+        executionCode += whileName + "\n";
+        expression.accept(this);
+        executionCode += indent + "lw " + conditionRegister + "," + expression.record.getName() + "(r0)\n";
+        executionCode += indent + "bz " + conditionRegister + "," + endWhileName + "\n";
+        statementBlock.accept(this);
+        executionCode += indent + "j " + whileName + "\n";
+        executionCode += endWhileName + "\n";
+
+        registerPool.push(conditionRegister);
     }
 
     @Override

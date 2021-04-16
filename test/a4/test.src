@@ -3,12 +3,7 @@ main
   var
   {
     integer x;
-    integer y;
   }
-    y = 0;
-    x = 100;
-    if ((x==100) and (y==0)) then {}
-    else {
-        x = 90;
-    };
+    x = 10;
+    write(x*10);
 }
