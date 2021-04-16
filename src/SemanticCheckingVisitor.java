@@ -4,7 +4,7 @@ public class SemanticCheckingVisitor extends Visitor{
 
     @Override
     protected void visitId(ASTNode node) {
-        node.record = getTableFromParentNode(node).globalSearch(node.token.lexeme);
+        node.record = node.getTableFromParent().globalSearch(node.token.lexeme);
         if (node.record == null) {
             String errorMessage = "Semantic Error - Use of undeclared variable: " + node.token.lexeme +
                     "(line " + node.token.location + ")\n";
@@ -353,15 +353,4 @@ public class SemanticCheckingVisitor extends Visitor{
         }
         return table;
     }
-
-    private SymbolTable getTableFromParentNode(ASTNode node) {
-        ASTNode parent = node;
-        SymbolTable table = parent.table;
-        while (table == null && parent != null) {
-            parent = parent.parent;
-            table = parent.table;
-        }
-        return table;
-    }
-
 }

@@ -94,4 +94,14 @@ public class ASTNode {
     public void accept(Visitor visitor) {
         visitor.visit(this);
     }
+
+    public SymbolTable getTableFromParent() {
+        SymbolTable table = this.table;
+        ASTNode parent = this.parent;
+        while (parent != null &&table == null) {
+            table = parent.table;
+            parent = parent.parent;
+        }
+        return table;
+    }
 }

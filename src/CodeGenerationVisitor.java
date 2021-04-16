@@ -25,7 +25,7 @@ public class CodeGenerationVisitor extends Visitor{
 
     @Override
     protected void visitId(ASTNode node) {
-        node.record = node.table.globalSearch(node.token.lexeme);
+        node.record = node.getTableFromParent().globalSearch(node.token.lexeme);
     }
 
     @Override
@@ -50,6 +50,11 @@ public class CodeGenerationVisitor extends Visitor{
 
     @Override
     protected void visitFactor(ASTNode node) {
+        iterateChildren(node);
+    }
+
+    @Override
+    protected void visitFunctionOrVariable(ASTNode node) {
         iterateChildren(node);
     }
 
@@ -119,7 +124,32 @@ public class CodeGenerationVisitor extends Visitor{
 
     @Override
     protected void visitExpression(ASTNode node) {
-        iterateChildren(node);
+        ASTNode lhs = null;
+        ASTNode rhs = null;
+        ASTNode comparator = null;
+
+        ASTNode child = node.leftmostChild;
+        while (child != null) {
+            child.accept(this);
+            if (child.type == ASTNodeType.REL_OP) {
+                comparator = child;
+            }
+            else if (child.type == ASTNodeType.ARITHMETIC_EXPRESSION && rhs == null) {
+                rhs = child;
+            }
+            else {
+                lhs = child;
+            }
+            if (child.record != null) {
+                node.record = child.record;
+            }
+            child = child.rightSibling;
+        }
+
+        if (lhs != null && rhs != null) {
+            String tempVar = createTempVar(node, lhs.record.getSize());
+            binaryOperation(lhs, rhs, tempVar, selectBinaryOperation(comparator));
+        }
     }
 
     @Override
@@ -151,6 +181,50 @@ public class CodeGenerationVisitor extends Visitor{
         registerPool.push(localRegister);
         registerPool.push(lhsOffsetRegister);
         registerPool.push(rhsOffsetRegister);
+    }
+
+    @Override
+    protected void visitIfStatement(ASTNode node) {
+        ASTNode expression = null;
+        ASTNode statement1 = null;
+        ASTNode statement2 = null;
+
+        ASTNode child = node.leftmostChild;
+        while (child != null) {
+            if (child.type == ASTNodeType.EXPRESSION) {
+                expression = child;
+            }
+            else if (statement2 == null) {
+                statement2 = child;
+            }
+            else {
+                statement1 = child;
+            }
+            if (child.record != null) {
+                node.record = child.record;
+            }
+            child = child.rightSibling;
+        }
+
+        expression.accept(this);
+        String conditionName = expression.record.getName();
+        String elseBlock = "else" + node.id;
+        String endIf = "endif" + node.id;
+
+        String conditionRegister = registerPool.pop();
+        executionCode += indent + "lw " + conditionRegister + "," + conditionName + "(r0)\n";
+        executionCode += indent + "bz " + conditionRegister + "," + elseBlock + "\n";
+
+        statement1.accept(this);
+        executionCode += indent + "j " + endIf + "\n";
+        executionCode += elseBlock + "\n";
+        statement2.accept(this);
+        executionCode += endIf + "\n";
+    }
+
+    @Override
+    protected void visitStatementBlock(ASTNode node) {
+        iterateChildren(node);
     }
 
     @Override
@@ -247,6 +321,26 @@ public class CodeGenerationVisitor extends Visitor{
             }
             else {
                 return "and";
+            }
+        }
+        else if (node.type == ASTNodeType.REL_OP) {
+            if (node.token.getType() == TokenType.EQUAL) {
+                return "ceq";
+            }
+            else if (node.token.getType() == TokenType.NOT_EQUAL) {
+                return "cne";
+            }
+            else if (node.token.getType() == TokenType.LESS_THAN) {
+                return "clt";
+            }
+            else if (node.token.getType() == TokenType.GREATER_THAN) {
+                return "cgt";
+            }
+            else if (node.token.getType() == TokenType.LESS_EQUAL) {
+                return "cle";
+            }
+            else { // great or equal
+                return "cge";
             }
         }
         else {

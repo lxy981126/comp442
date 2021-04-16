@@ -144,10 +144,7 @@ public class SemanticAction {
             doAction(stack, symbol, listItemTypes);
         }
         else if (symbol.name.equals("assignStat")) {
-            ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
-                    Arrays.asList(ASTNodeType.ID, ASTNodeType.INDEX_LIST, ASTNodeType.APARAM_LIST,
-                            ASTNodeType.ASSIGN_OP, ASTNodeType.EXPRESSION));
-            doAction(stack, symbol, listItemTypes);
+            assignStatementAction(stack, symbol);
         }
         else if (symbol.name.equals("factor")) {
             factorAction(stack, symbol);
@@ -237,14 +234,18 @@ public class SemanticAction {
 
     private static void funcOrVarAction(Stack<ASTNode> stack, SemanticSymbol symbol) {
         ASTNode funcOrVar = new ASTNode(symbol);
-        int idToBeAdopted = 1;
+        adoptFuncVar(stack, funcOrVar);
+        stack.push(funcOrVar);
+    }
 
+    private static void adoptFuncVar(Stack<ASTNode> stack, ASTNode parent) {
         ASTNode child = stack.empty()? null:stack.peek();
+        int idToBeAdopted = 1;
 
         while (child != null && (child.type == ASTNodeType.INDEX_LIST ||
                 child.type == ASTNodeType.APARAM_LIST ||
                 (child.type == ASTNodeType.ID && idToBeAdopted > 0))) {
-            funcOrVar.adoptChild(child);
+            parent.adoptChild(child);
             if (child.type == ASTNodeType.INDEX_LIST || child.type == ASTNodeType.APARAM_LIST) {
                 idToBeAdopted++;
             }
@@ -254,7 +255,6 @@ public class SemanticAction {
             stack.pop();
             child = stack.empty()? null:stack.peek();
         }
-        stack.push(funcOrVar);
     }
 
     private static void factorAction(Stack<ASTNode> stack,
@@ -310,5 +310,23 @@ public class SemanticAction {
             }
         }
         stack.push(factorNode);
+    }
+
+    private static void assignStatementAction(Stack<ASTNode> stack, SemanticSymbol symbol) {
+        ASTNode assignNode = new ASTNode(symbol);
+
+        ASTNode child = stack.empty()? null:stack.peek();
+        if (child != null && child.type == ASTNodeType.EXPRESSION) {
+            assignNode.adoptChild(child);
+            stack.pop();
+            child = stack.empty()? null:stack.peek();
+        }
+        if (child != null && child.type == ASTNodeType.ASSIGN_OP) {
+            assignNode.adoptChild(child);
+            stack.pop();
+        }
+        adoptFuncVar(stack, assignNode);
+
+        stack.push(assignNode);
     }
 }
