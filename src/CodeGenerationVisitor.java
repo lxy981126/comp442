@@ -24,6 +24,57 @@ public class CodeGenerationVisitor extends Visitor{
     }
 
     @Override
+    protected void visitAddOperation(ASTNode node) {
+        node.record = new SymbolTableRecord(node.table);
+        if (node.token.getType() == TokenType.PLUS) {
+            node.record.setName("add");
+        }
+        else if (node.token.getType() == TokenType.MINUS) {
+            node.record.setName("sub");
+        }
+        else {
+            node.record.setName("or");
+        }
+    }
+
+    @Override
+    protected void visitMultOperation(ASTNode node) {
+        node.record = new SymbolTableRecord(node.table);
+        if (node.token.getType() == TokenType.MULTIPLICATION) {
+            node.record.setName("mul");
+        }
+        else if (node.token.getType() == TokenType.DIVISION) {
+            node.record.setName("divv");
+        }
+        else {
+            node.record.setName("and");
+        }
+    }
+
+    @Override
+    protected void visitRelOperation(ASTNode node) {
+        node.record = new SymbolTableRecord(node.table);
+        if (node.token.getType() == TokenType.EQUAL) {
+            node.record.setName("ceq");
+        }
+        else if (node.token.getType() == TokenType.NOT_EQUAL) {
+            node.record.setName("cne");
+        }
+        else if (node.token.getType() == TokenType.LESS_THAN) {
+            node.record.setName("clt");
+        }
+        else if (node.token.getType() == TokenType.GREATER_THAN) {
+            node.record.setName("cgt");
+        }
+        else if (node.token.getType() == TokenType.LESS_EQUAL) {
+            node.record.setName("cle");
+        }
+        else { // great or equal
+            node.record.setName("cge");
+        }
+    }
+
+    @Override
     protected void visitId(ASTNode node) {
         node.record = node.getTableFromParent().globalSearch(node.token.lexeme);
     }
@@ -86,7 +137,7 @@ public class CodeGenerationVisitor extends Visitor{
 
         if (lhs != null && rhs != null) {
             String tempVar = createTempVar(node, lhs.record.getSize());
-            binaryOperation(lhs, rhs, tempVar, selectBinaryOperation(operation));
+            binaryOperation(lhs, rhs, tempVar, operation.record.getName());
         }
     }
 
@@ -118,7 +169,7 @@ public class CodeGenerationVisitor extends Visitor{
 
         if (lhs != null && rhs != null) {
             String tempVar = createTempVar(node, lhs.record.getSize());
-            binaryOperation(lhs, rhs, tempVar, selectBinaryOperation(operation));
+            binaryOperation(lhs, rhs, tempVar, operation.record.getName());
         }
     }
 
@@ -148,8 +199,13 @@ public class CodeGenerationVisitor extends Visitor{
 
         if (lhs != null && rhs != null) {
             String tempVar = createTempVar(node, lhs.record.getSize());
-            binaryOperation(lhs, rhs, tempVar, selectBinaryOperation(comparator));
+            binaryOperation(lhs, rhs, tempVar, comparator.record.getName());
         }
+    }
+
+    @Override
+    protected void visitVariable(ASTNode node) {
+        iterateChildren(node);
     }
 
     @Override
@@ -173,6 +229,7 @@ public class CodeGenerationVisitor extends Visitor{
         String lhsOffsetRegister = registerPool.pop();
         String rhsOffsetRegister = registerPool.pop();
 
+        executionCode += "% ==== assign statement ====\n";
         executionCode += indent + "addi " + rhsOffsetRegister + ",r0," + rhsExpression.offset + "\n";
         executionCode += indent + "lw " + localRegister + "," + rhsExpression.record.getName() + "(" + rhsOffsetRegister + ")\n";
         executionCode += indent + "addi " + lhsOffsetRegister + ",r0," + lhs.offset + "\n";
@@ -184,6 +241,27 @@ public class CodeGenerationVisitor extends Visitor{
     }
 
     @Override
+    protected void visitReadStatement(ASTNode node) {
+        iterateChildren(node);
+
+        String bufferRegister = registerPool.pop();
+        String bufferName = "buffer" + node.id;
+
+        executionCode += "% ==== write statement ====\n";
+        executionCode += "%     ==== pass parameter ====\n";
+        dataCode += bufferName + " res 20\n";
+        executionCode += indent + "addi " + bufferRegister + ",r0," + bufferName + "\n";
+        executionCode += indent + "addi r14,r0,topaddr\n"; //todo???
+        executionCode += indent + "sw -8(r14)," + bufferRegister + "\n";
+
+        executionCode += "%     ==== getstr call ====\n";
+        executionCode += indent + "jl r15, getstr\n";
+        executionCode += indent + "sw " + node.record.getName() + "(r0),r13\n";
+
+        registerPool.push(bufferRegister);
+    }
+
+    @Override
     protected void visitWriteStatement(ASTNode node) {
         iterateChildren(node);
 
@@ -191,18 +269,24 @@ public class CodeGenerationVisitor extends Visitor{
         String bufferRegister = registerPool.pop();
 
         executionCode += "% ==== write statement ====\n";
+        executionCode += "%     ==== pass parameter ====\n";
         executionCode += indent + "lw " + expressionRegister + "," + node.record.getName() + "(r0)\n";
         executionCode += indent + "addi r14,r0,topaddr\n"; //todo???
         executionCode += indent + "sw -8(r14)," + expressionRegister + "\n";
 
+        executionCode += "%     ==== pass parameter ====\n";
         String bufferName = "buffer" + node.id;
         dataCode += bufferName + " res 20\n";
         executionCode += indent + "addi " + bufferRegister + ",r0," + bufferName + "\n";
         executionCode += indent + "sw -12(r14)," + bufferRegister + "\n";
 
+        executionCode += "%     ==== intstr call ====\n";
         executionCode += indent + "jl r15, intstr\n";
-        executionCode += indent + "addi r14,r0,topaddr\n"; //todo???
+
+        executionCode += "%     ==== pass parameter ====\n";
         executionCode += indent + "sw -8(r14),r13\n";
+
+        executionCode += "%     ==== putstr call ====\n";
         executionCode += indent + "jl r15,putstr\n";
 
         registerPool.push(expressionRegister);
@@ -238,6 +322,7 @@ public class CodeGenerationVisitor extends Visitor{
         String endIf = "endif" + node.id;
 
         String conditionRegister = registerPool.pop();
+        executionCode += "% ==== if statement ====\n";
         executionCode += indent + "lw " + conditionRegister + "," + conditionName + "(r0)\n";
         executionCode += indent + "bz " + conditionRegister + "," + elseBlock + "\n";
 
@@ -273,6 +358,7 @@ public class CodeGenerationVisitor extends Visitor{
         String whileName = "goWhile" + node.id;
         String endWhileName = "endWhile" + node.id;
 
+        executionCode += "% ==== while loop ====\n";
         executionCode += whileName + "\n";
         expression.accept(this);
         executionCode += indent + "lw " + conditionRegister + "," + expression.record.getName() + "(r0)\n";
@@ -360,54 +446,6 @@ public class CodeGenerationVisitor extends Visitor{
         registerPool.push(lhsOffsetRegister);
         registerPool.push(rhsRegister);
         registerPool.push(rhsOffsetRegister);
-    }
-
-    private String selectBinaryOperation(ASTNode node){
-        if (node.type == ASTNodeType.ADD_OP) {
-            if (node.token.getType() == TokenType.PLUS) {
-                return "add";
-            }
-            else if (node.token.getType() == TokenType.MINUS) {
-                return "sub";
-            }
-            else {
-                return "or";
-            }
-        }
-        else if (node.type == ASTNodeType.MULT_OP){
-            if (node.token.getType() == TokenType.MULTIPLICATION) {
-                return "mul";
-            }
-            else if (node.token.getType() == TokenType.DIVISION) {
-                return "divv";
-            }
-            else {
-                return "and";
-            }
-        }
-        else if (node.type == ASTNodeType.REL_OP) {
-            if (node.token.getType() == TokenType.EQUAL) {
-                return "ceq";
-            }
-            else if (node.token.getType() == TokenType.NOT_EQUAL) {
-                return "cne";
-            }
-            else if (node.token.getType() == TokenType.LESS_THAN) {
-                return "clt";
-            }
-            else if (node.token.getType() == TokenType.GREATER_THAN) {
-                return "cgt";
-            }
-            else if (node.token.getType() == TokenType.LESS_EQUAL) {
-                return "cle";
-            }
-            else { // great or equal
-                return "cge";
-            }
-        }
-        else {
-            return null;
-        }
     }
 
     private String createTempVar(ASTNode node, int size) {

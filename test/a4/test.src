@@ -2,8 +2,7 @@ main
 {
   var
   {
-    integer x;
+    integer arr[7];
   }
-    x = 10;
-    write(x*10);
+  arr[3] = 64;
 }
