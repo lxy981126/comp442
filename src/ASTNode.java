@@ -104,4 +104,12 @@ public class ASTNode {
         }
         return table;
     }
+
+    public ASTNode searchParent(ASTNodeType parentType) {
+        ASTNode parent = this.parent;
+        while (parent != null && parent.type != parentType) {
+            parent = parent.parent;
+        }
+        return parent;
+    }
 }

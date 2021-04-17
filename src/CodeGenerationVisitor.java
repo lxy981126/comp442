@@ -96,6 +96,10 @@ public class CodeGenerationVisitor extends Visitor{
         node.record.setLocation(node.token.location);
         node.record.setSize(size);
 
+        if (node.searchParent(ASTNodeType.INDEX_LIST) != null) {
+            node.offset = Integer.parseInt(node.token.lexeme);
+        }
+
         registerPool.push(localRegister);
     }
 
@@ -107,6 +111,37 @@ public class CodeGenerationVisitor extends Visitor{
     @Override
     protected void visitFunctionOrVariable(ASTNode node) {
         iterateChildren(node);
+
+        ASTNode id = null;
+        ASTNode index = null;
+
+        ASTNode child = node.leftmostChild;
+        while (child != null) {
+            if (child.type == ASTNodeType.ID) {
+                id = child;
+            }
+            else if (child.type == ASTNodeType.INDEX_LIST){
+                index = child;
+            }
+            child = child.rightSibling;
+        }
+
+        if (index != null) {
+            String tempVar = "t" + node.id;
+            node.record.setName(tempVar);
+            dataCode += tempVar + " res " + id.record.getSize() + "\n";
+            int offset = node.offset * node.record.getSize();
+
+            String offsetRegister = registerPool.pop();
+            String tempVarRegister = registerPool.pop();
+
+            executionCode += indent + "addi " + offsetRegister + ",r0," + offset + "\n";
+            executionCode += indent + "lw " + tempVarRegister + "," + id.record.getName() + "(" + offsetRegister + ")\n";
+            executionCode += indent + "sw " + tempVar + "(r0)," + tempVarRegister + "\n";
+
+            registerPool.push(offsetRegister);
+            registerPool.push(tempVarRegister);
+        }
     }
 
     @Override
@@ -131,6 +166,9 @@ public class CodeGenerationVisitor extends Visitor{
             }
             if (child.record != null) {
                 node.record = child.record;
+            }
+            if (child.offset != 0) {
+                node.offset = child.offset;
             }
             child = child.rightSibling;
         }
@@ -164,6 +202,9 @@ public class CodeGenerationVisitor extends Visitor{
             if (child.record != null) {
                 node.record = child.record;
             }
+            if (child.offset != 0) {
+                node.offset = child.offset;
+            }
             child = child.rightSibling;
         }
 
@@ -194,6 +235,9 @@ public class CodeGenerationVisitor extends Visitor{
             if (child.record != null) {
                 node.record = child.record;
             }
+            if (child.offset != 0) {
+                node.offset = child.offset;
+            }
             child = child.rightSibling;
         }
 
@@ -201,6 +245,11 @@ public class CodeGenerationVisitor extends Visitor{
             String tempVar = createTempVar(node, lhs.record.getSize());
             binaryOperation(lhs, rhs, tempVar, comparator.record.getName());
         }
+    }
+
+    @Override
+    protected void visitIndexList(ASTNode node) {
+        iterateChildren(node);
     }
 
     @Override
@@ -222,22 +271,28 @@ public class CodeGenerationVisitor extends Visitor{
             else {
                 lhs = child;
             }
+            if (child.record != null) {
+                node.record = child.record;
+            }
+            if (child.offset != 0) {
+                node.offset = child.offset;
+            }
             child = child.rightSibling;
         }
 
         String localRegister = registerPool.pop();
-        String lhsOffsetRegister = registerPool.pop();
-        String rhsOffsetRegister = registerPool.pop();
+        String lhsOffsetRegister = node.offset==0? "r0":registerPool.pop();
+        int offset = node.offset * rhsExpression.record.getSize();
 
         executionCode += "% ==== assign statement ====\n";
-        executionCode += indent + "addi " + rhsOffsetRegister + ",r0," + rhsExpression.offset + "\n";
-        executionCode += indent + "lw " + localRegister + "," + rhsExpression.record.getName() + "(" + rhsOffsetRegister + ")\n";
-        executionCode += indent + "addi " + lhsOffsetRegister + ",r0," + lhs.offset + "\n";
+        executionCode += indent + "lw " + localRegister + "," + rhsExpression.record.getName() + "(r0)\n";
+        executionCode += indent + "addi " + lhsOffsetRegister + ",r0," + offset + "\n";
         executionCode += indent + "sw " + lhs.record.getName() + "(" + lhsOffsetRegister + ")," + localRegister + "\n";
 
         registerPool.push(localRegister);
-        registerPool.push(lhsOffsetRegister);
-        registerPool.push(rhsOffsetRegister);
+        if (!lhsOffsetRegister.equals("r0")) {
+            registerPool.push(lhsOffsetRegister);
+        }
     }
 
     @Override
@@ -313,6 +368,9 @@ public class CodeGenerationVisitor extends Visitor{
             if (child.record != null) {
                 node.record = child.record;
             }
+            if (child.offset != 0) {
+                node.offset = child.offset;
+            }
             child = child.rightSibling;
         }
 
@@ -350,6 +408,9 @@ public class CodeGenerationVisitor extends Visitor{
             }
             if (child.record != null) {
                 node.record = child.record;
+            }
+            if (child.offset != 0) {
+                node.offset = child.offset;
             }
             child = child.rightSibling;
         }
@@ -423,6 +484,9 @@ public class CodeGenerationVisitor extends Visitor{
             list.get(i).accept(this);
             if (list.get(i).record != null ) {
                 node.record = list.get(i).record;
+            }
+            if (list.get(i).offset != 0) {
+                node.offset = list.get(i).offset;
             }
         }
     }
