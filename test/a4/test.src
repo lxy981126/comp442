@@ -1,10 +1,8 @@
+
+func function(integer size) : void {
+}
+
 main
 {
-  var
-  {
-    integer x;
-    integer arr[7];
-  }
-  arr[3] = 90;
-  write(arr[3]);
+  function(2);
 }

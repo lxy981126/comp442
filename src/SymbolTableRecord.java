@@ -83,6 +83,16 @@ public class SymbolTableRecord {
         setKind(SymbolKind.CLASS);
     }
 
+    SymbolTableRecord(SymbolTableRecord copy) {
+        this.name = copy.getName();
+        this.link = copy.getLink();
+        this.kind = copy.getKind();
+        this.type = copy.getType();
+        this.parent = copy.getParent();
+        this.location = copy.getLocation();
+        this.size = copy.getSize();
+    }
+
     public boolean overloaded(SymbolTableRecord record) {
         SymbolTableRecord result;
         SymbolTable parentTable = parent;

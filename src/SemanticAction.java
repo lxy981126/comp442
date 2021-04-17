@@ -126,12 +126,12 @@ public class SemanticAction {
         else if (symbol.name.equals("ifStat")) {
             ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
                     Arrays.asList(ASTNodeType.EXPRESSION, ASTNodeType.STATEMENT_BLOCK, ASTNodeType.STATEMENT_BLOCK));
-            doAction(stack, symbol, listItemTypes);
+            actionInOrder(stack, symbol, listItemTypes);
         }
         else if (symbol.name.equals("whileStat")) {
             ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
                     Arrays.asList(ASTNodeType.EXPRESSION, ASTNodeType.STATEMENT_BLOCK));
-            doAction(stack, symbol, listItemTypes);
+            actionInOrder(stack, symbol, listItemTypes);
         }
         else if (symbol.name.equals("readStat")) {
             ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
@@ -141,7 +141,7 @@ public class SemanticAction {
         else if (symbol.name.equals("writeStat") || symbol.name.equals("returnStat")) {
             ArrayList<ASTNodeType> listItemTypes = new ArrayList<>(
                     Arrays.asList(ASTNodeType.EXPRESSION));
-            doAction(stack, symbol, listItemTypes);
+            actionInOrder(stack, symbol, listItemTypes);
         }
         else if (symbol.name.equals("assignStat")) {
             assignStatementAction(stack, symbol);
