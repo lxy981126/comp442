@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 public class MemorySizeComputingVisitor extends Visitor{
 
     @Override
@@ -106,13 +108,13 @@ public class MemorySizeComputingVisitor extends Visitor{
 
     @Override
     protected void visitProgram(ASTNode node) {
-        ASTNode child = node.leftmostChild;
-        while (child != null) {
+        ArrayList<ASTNode> children = getChildrenArraylist(node);
+        for (int i = children.size() - 1; i >=0; i--) {
+            ASTNode child = children.get(i);
             child.accept(this);
             if (child.type == ASTNodeType.FUNCTION_BODY) {
                 collectSizeInScope(node.table, "main");
             }
-            child = child.rightSibling;
         }
     }
 
@@ -127,20 +129,28 @@ public class MemorySizeComputingVisitor extends Visitor{
     }
 
     private void iterateChildren(ASTNode node) {
-        ASTNode child = node.leftmostChild;
-        while (child != null) {
-            child.accept(this);
-            child = child.rightSibling;
+        ArrayList<ASTNode> children = getChildrenArraylist(node);
+        for (int i = children.size() - 1; i >=0; i--) {
+            children.get(i).accept(this);
         }
     }
 
     private void iterateWithGivenTable(ASTNode node, SymbolTable table) {
+        ArrayList<ASTNode> children = getChildrenArraylist(node);
+        for (int i = children.size() - 1; i >=0; i--) {
+            children.get(i).table = table;
+            children.get(i).accept(this);
+        }
+    }
+
+    private ArrayList<ASTNode> getChildrenArraylist(ASTNode node) {
+        ArrayList<ASTNode> list = new ArrayList<>();
         ASTNode child = node.leftmostChild;
         while (child != null) {
-            child.table = table;
-            child.accept(this);
+            list.add(child);
             child = child.rightSibling;
         }
+        return list;
     }
 
     private int computeVariableSize(SymbolTable table, VariableType variableType) {

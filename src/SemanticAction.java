@@ -1,6 +1,7 @@
 import java.net.IDN;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Stack;
 
 public class SemanticAction {
@@ -16,6 +17,7 @@ public class SemanticAction {
                 symbol.name.equals("type") ||
                 symbol.name.equals("not") ||
                 symbol.name.equals("id") ||
+                symbol.name.equals("dot") ||
                 symbol.name.equals("visibility") ||
                 symbol.name.equals("breakStat") ||
                 symbol.name.equals("continueStat")) {
@@ -240,22 +242,50 @@ public class SemanticAction {
     }
 
     private static void adoptFuncVar(Stack<ASTNode> stack, ASTNode parent) {
-        ASTNode child = stack.empty()? null:stack.peek();
-        int idToBeAdopted = 1;
+        ArrayList<ASTNodeType> types = new ArrayList<>(List.of(ASTNodeType.TYPE, ASTNodeType.APARAM_LIST,
+                ASTNodeType.INDEX_LIST, ASTNodeType.DOT, ASTNodeType.ID));
+        boolean canAdoptId = true;
 
-        while (child != null && (child.type == ASTNodeType.INDEX_LIST ||
-                child.type == ASTNodeType.APARAM_LIST ||
-                (child.type == ASTNodeType.ID && idToBeAdopted > 0))) {
-            parent.adoptChild(child);
-            if (child.type == ASTNodeType.INDEX_LIST || child.type == ASTNodeType.APARAM_LIST) {
-                idToBeAdopted++;
+        ASTNode child = stack.empty()? null:stack.peek();
+        while (child != null && types.contains(child.type)) {
+            if (child.type == ASTNodeType.DOT) {
+                parent.adoptChild(child);
+                stack.pop();
+                canAdoptId = true;
+            }
+            else if (child.type == ASTNodeType.ID){
+                if (canAdoptId) {
+                    parent.adoptChild(child);
+                    stack.pop();
+                    canAdoptId = false;
+                }
+                else {
+                    return;
+                }
             }
             else {
-                idToBeAdopted--;
+                parent.adoptChild(child);
+                stack.pop();
+                canAdoptId = false;
             }
-            stack.pop();
             child = stack.empty()? null:stack.peek();
         }
+
+//        int idToBeAdopted = 1;
+//
+//        while (child != null && (child.type == ASTNodeType.INDEX_LIST ||
+//                child.type == ASTNodeType.APARAM_LIST ||
+//                (child.type == ASTNodeType.ID && idToBeAdopted > 0))) {
+//            parent.adoptChild(child);
+//            if (child.type == ASTNodeType.INDEX_LIST || child.type == ASTNodeType.APARAM_LIST) {
+//                idToBeAdopted++;
+//            }
+//            else {
+//                idToBeAdopted--;
+//            }
+//            stack.pop();
+//            child = stack.empty()? null:stack.peek();
+//        }
     }
 
     private static void factorAction(Stack<ASTNode> stack,
@@ -327,14 +357,15 @@ public class SemanticAction {
             stack.pop();
             child = stack.empty()? null:stack.peek();
         }
-        //adoptFuncVar(stack, assignNode);
+        adoptFuncVar(stack, assignNode);
 
-        while (child != null && (child.type == ASTNodeType.ID ||
-                child.type == ASTNodeType.APARAM_LIST || child.type == ASTNodeType.INDEX_LIST)) {
-            assignNode.adoptChild(child);
-            stack.pop();
-            child = stack.empty()? null:stack.peek();
-        }
+//        while (child != null && (child.type == ASTNodeType.ID ||
+//                child.type == ASTNodeType.APARAM_LIST ||
+//                child.type == ASTNodeType.INDEX_LIST || child.type == ASTNodeType.DOT)) {
+//            assignNode.adoptChild(child);
+//            stack.pop();
+//            child = stack.empty()? null:stack.peek();
+//        }
 
         stack.push(assignNode);
     }

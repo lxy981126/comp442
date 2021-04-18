@@ -118,6 +118,9 @@ public class CodeGenerationVisitor extends Visitor{
 
         for (int i=0;i<children.size();i++) {
             ASTNode child = children.get(i);
+            if (child.table == null) {
+                child.table = node.table;
+            }
             if (child.type == ASTNodeType.ID) {
                 ids.add(child);
                 indexes.add(null);
@@ -140,6 +143,9 @@ public class CodeGenerationVisitor extends Visitor{
         for (int i = 0; i < ids.size(); i++) {
             ASTNode id = ids.get(i);
             id.accept(this);
+            if (id.record != null) {
+                node.record = id.record;
+            }
 
             if (i+1 < ids.size()) {
                 ASTNode nextId = ids.get(i+1);
@@ -148,9 +154,8 @@ public class CodeGenerationVisitor extends Visitor{
                 nextId.table = classRecord.getLink();
             }
 
-            ASTNode index = ids.get(i);
-            ASTNode parameters = ids.get(i);
-
+            ASTNode index = indexes.get(i);
+            ASTNode parameters = parametersList.get(i);
             if (index != null) {
                 int tempVarSize = node.record.getElementSize();
                 String tempVar = createTempVar(node, tempVarSize);
@@ -187,6 +192,9 @@ public class CodeGenerationVisitor extends Visitor{
 
         ASTNode child = node.leftmostChild;
         while (child != null) {
+            if (child.table == null) {
+                child.table = node.table;
+            }
             child.accept(this);
             if (child.type == ASTNodeType.FACTOR) {
                 if (rhs == null) {
@@ -222,6 +230,9 @@ public class CodeGenerationVisitor extends Visitor{
 
         ASTNode child = node.leftmostChild;
         while (child != null) {
+            if (child.table == null) {
+                child.table = node.table;
+            }
             child.accept(this);
             if (child.type == ASTNodeType.TERM) {
                 if (rhs == null) {
@@ -257,6 +268,9 @@ public class CodeGenerationVisitor extends Visitor{
 
         ASTNode child = node.leftmostChild;
         while (child != null) {
+            if (child.table == null) {
+                child.table = node.table;
+            }
             child.accept(this);
             if (child.type == ASTNodeType.REL_OP) {
                 comparator = child;
@@ -328,6 +342,9 @@ public class CodeGenerationVisitor extends Visitor{
         for (int i = 0; i < ids.size(); i++) {
             ASTNode id = ids.get(i);
             id.accept(this);
+            if (id.record != null) {
+                node.record = id.record;
+            }
 
             if (i+1 < ids.size()) {
                 ASTNode nextId = ids.get(i+1);
@@ -363,7 +380,7 @@ public class CodeGenerationVisitor extends Visitor{
 
     @Override
     protected void visitReadStatement(ASTNode node) {
-        executionCode += "% ==== write statement ====\n";
+        executionCode += "% ==== read statement ====\n";
         iterateChildren(node);
 
         String bufferRegister = registerPool.pop();
@@ -500,10 +517,9 @@ public class CodeGenerationVisitor extends Visitor{
 
     @Override
     protected void visitReturnStatement(ASTNode node) {
-        String returnVar = node.record.getName();
-        dataCode += returnVar + indent + "res " + node.record.getSize() + "\n";
-
         iterateChildren(node);
+        String returnVar = node.record.getName();
+//        dataCode += returnVar + indent + "res " + node.record.getSize() + "\n";
 
         String valueRegister = registerPool.pop();
         String returnValue = node.record.getName();
@@ -642,7 +658,7 @@ public class CodeGenerationVisitor extends Visitor{
     protected void visitProgram(ASTNode node) {
         ArrayList<ASTNode> list = reverseChildren(node);
 
-        for (int i = list.size() - 1; i >= 0; i--) {
+        for (int i = 0; i < list.size(); i++) {
             ASTNode currentChild = list.get(i);
             if (list.get(i).type == ASTNodeType.FUNCTION_BODY) {
                 currentChild.record.setName("main");

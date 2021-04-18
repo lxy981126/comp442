@@ -1,8 +1,14 @@
 class POLYNOMIAL
 {
-	//public func evaluate(float x) : float;
+	public func evaluate(float x) : integer;
 	public integer i;
 };
+
+func POLYNOMIAL::evaluate(float x) : integer
+{
+    i = 6;
+    return (0);
+}
 
 main
 {
@@ -12,5 +18,6 @@ main
     }
 
     p.i = 5;
-    write(p.i);
+    x = p.evaluate(2);
+    //write(p.i);
 }

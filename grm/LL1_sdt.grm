@@ -71,16 +71,16 @@
 <FuncOrAssignStat> ::= #id# 'id' <FuncOrAssignStatIdnest>
 <FuncOrAssignStatIdnest> ::= <IndiceRep> <FuncOrAssignStatIdnestVarTail>
 <FuncOrAssignStatIdnest> ::= '(' <AParams> ')' <FuncOrAssignStatIdnestFuncTail>
-<FuncOrAssignStatIdnestVarTail> ::= '.' #id# 'id' <FuncOrAssignStatIdnest>
+<FuncOrAssignStatIdnestVarTail> ::= #dot# '.' #id# 'id' <FuncOrAssignStatIdnest>
 <FuncOrAssignStatIdnestVarTail> ::= <AssignStatTail>
 <AssignStatTail> ::= <AssignOp> <Expr>
 
-<FuncOrAssignStatIdnestFuncTail> ::= '.' #id# 'id' <FuncStatTail>
+<FuncOrAssignStatIdnestFuncTail> ::= #dot# '.' #id# 'id' <FuncStatTail>
 <FuncOrAssignStatIdnestFuncTail> ::= EPSILON
 
-<FuncStatTail> ::= <IndiceRep> '.' #id# 'id' <FuncStatTail>
+<FuncStatTail> ::= <IndiceRep> #dot# '.' #id# 'id' <FuncStatTail>
 <FuncStatTail> ::= '(' <AParams> ')' <FuncStatTailIdnest>
-<FuncStatTailIdnest> ::= '.' #id# 'id' <FuncStatTail>
+<FuncStatTailIdnest> ::= #dot# '.' #id# 'id' <FuncStatTail>
 <FuncStatTailIdnest> ::= EPSILON
 
 <Factor> ::= <FuncOrVar> #factor#
@@ -95,7 +95,7 @@
 <FuncOrVar> ::= #id# 'id' <FuncOrVarIdnest> #funcOrVar#
 <FuncOrVarIdnest> ::= <IndiceRep> <FuncOrVarIdnestTail>
 <FuncOrVarIdnest> ::= '(' <AParams> ')' <FuncOrVarIdnestTail>
-<FuncOrVarIdnestTail> ::= '.' #id# 'id' <FuncOrVarIdnest>
+<FuncOrVarIdnestTail> ::= #dot# '.' #id# 'id' <FuncOrVarIdnest>
 <FuncOrVarIdnestTail> ::= EPSILON
 
 <AParams> ::= <Expr> #aParam# <AParamsTail> #aParamList#
