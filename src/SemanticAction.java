@@ -9,6 +9,7 @@ public class SemanticAction {
         if (symbol.name.equals("addOp") ||
                 symbol.name.equals("multOp") ||
                 symbol.name.equals("relOp") ||
+                symbol.name.equals("assignOp") ||
                 symbol.name.equals("sign") ||
                 symbol.name.equals("num") ||
                 symbol.name.equals("str") ||

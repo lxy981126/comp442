@@ -4,28 +4,8 @@ public class MemorySizeComputingVisitor extends Visitor{
     protected void visitId(ASTNode node) {
         SymbolTableRecord record = node.table.globalSearch(node.token.lexeme);
         if (record.getKind() == SymbolKind.VARIABLE || record.getKind() == SymbolKind.PARAMETER) {
-
             VariableType variableType = (VariableType) record.getType();
-            if (variableType.className.equals("integer")) {
-                record.setSize(4);
-            }
-            else if (variableType.className.equals("float")){
-                record.setSize(8);
-            }
-            else if (variableType.className.equals("string")){
-                // todo: string size
-            }
-            else {
-                // todo: custom class type
-            }
-
-            if (variableType.dimension.size() != 0) {
-                int dimension = 1;
-                for (int i: variableType.dimension) {
-                    dimension *= i;
-                }
-                record.setSize(record.getSize() * dimension);
-            }
+            record.setSize(computeVariableSize(variableType));
         }
     }
 
@@ -46,6 +26,26 @@ public class MemorySizeComputingVisitor extends Visitor{
 
     @Override
     protected void visitVariableDeclarationList(ASTNode node) {
+        iterateChildren(node);
+    }
+
+    @Override
+    protected void visitReturnStatement(ASTNode node) {
+        String functionName = node.table.name;
+        SymbolTableRecord functionRecord = node.table.globalSearch(functionName);
+        FunctionType functionType = ((FunctionType) functionRecord.getType());
+
+        String returnName = node.table.parent.name + "_" + functionName + "_return";
+        node.record = new SymbolTableRecord(node.table);
+        node.record.setKind(SymbolKind.VARIABLE);
+        node.record.setName(returnName);
+        node.record.setType(functionType.returnType);
+        node.record.setSize(computeVariableSize(functionType.returnType));
+        node.table.insert(node.record);
+    }
+
+    @Override
+    protected void visitStatementList(ASTNode node) {
         iterateChildren(node);
     }
 
@@ -141,5 +141,27 @@ public class MemorySizeComputingVisitor extends Visitor{
             child.accept(this);
             child = child.rightSibling;
         }
+    }
+
+    private int computeVariableSize(VariableType variableType) {
+        int size = 0;
+        if (variableType.className.equals("integer")) {
+            size = 4;
+        }
+        else if (variableType.className.equals("float")){
+            size = 8;
+        }
+        else {
+            // todo: custom class type
+        }
+
+        if (variableType.dimension.size() != 0) {
+            int dimension = 1;
+            for (int i: variableType.dimension) {
+                dimension *= i;
+            }
+            size *= dimension;
+        }
+        return size;
     }
 }

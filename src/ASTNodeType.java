@@ -1,7 +1,7 @@
 public enum ASTNodeType {
     // leaf
     NOT("not"),
-    ASSIGN_OP("assginOp"),
+    ASSIGN_OP("assignOp"),
     REL_OP("relOp"),
     ADD_OP("addOp"),
     MULT_OP("multOp"),

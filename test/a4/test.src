@@ -1,8 +1,14 @@
 
-func function(integer size) : void {
+func function(integer size) : integer {
+
+    return (9);
 }
 
 main
 {
-  function(2);
+    var{
+        integer x;
+    }
+    x = function(2);
+  write(x);
 }

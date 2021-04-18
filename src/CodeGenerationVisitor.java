@@ -111,20 +111,29 @@ public class CodeGenerationVisitor extends Visitor{
 
     @Override
     protected void visitFunctionOrVariable(ASTNode node) {
-        iterateChildren(node);
-
+        ArrayList<ASTNode> children = reverseChildren(node);
         ASTNode id = null;
         ASTNode index = null;
+        ASTNode parameters = null;
 
-        ASTNode child = node.leftmostChild;
-        while (child != null) {
+        for (ASTNode child:children) {
             if (child.type == ASTNodeType.ID) {
                 id = child;
             }
             else if (child.type == ASTNodeType.INDEX_LIST){
                 index = child;
             }
-            child = child.rightSibling;
+            else if (child.type == ASTNodeType.APARAM_LIST) {
+                parameters = child;
+                continue;
+            }
+            child.accept(this);
+            if (child.record != null ) {
+                node.record = child.record;
+            }
+            if (child.offset != 0) {
+                node.offset = child.offset;
+            }
         }
 
         if (index != null) {
@@ -142,6 +151,15 @@ public class CodeGenerationVisitor extends Visitor{
 
             registerPool.push(offsetRegister);
             registerPool.push(tempVarRegister);
+        }
+        if (parameters != null) {
+            parameters.record = node.record;
+            parameters.accept(this);
+            executionCode += indent + "jl r15," + id.record.getName() + "\n";
+
+            String returnValue = parameters.record.getName() + "_return";
+            SymbolTableRecord returnRecord = parameters.record.getLink().globalSearch(returnValue);
+            node.record = returnRecord;
         }
     }
 
@@ -311,11 +329,8 @@ public class CodeGenerationVisitor extends Visitor{
             executionCode += indent + "sw " + lhs.record.getName() + "(" + lhsOffsetRegister + ")," + localRegister + "\n";
         }
         else {
-            // todo: function call
             functionParameters.record = node.record;
             functionParameters.accept(this);
-
-            executionCode += indent + "addi r15,r0,topaddr\n"; //todo???
             executionCode += indent + "jl r15," + lhs.record.getName() + "\n";
         }
 
@@ -463,6 +478,25 @@ public class CodeGenerationVisitor extends Visitor{
     }
 
     @Override
+    protected void visitReturnStatement(ASTNode node) {
+        String returnVar = node.record.getName();
+        dataCode += returnVar + indent + "res " + node.record.getSize() + "\n";
+
+        iterateChildren(node);
+
+        String valueRegister = registerPool.pop();
+        String returnValue = node.record.getName();
+        executionCode += indent + "lw " + valueRegister + "," + returnValue + "(r0)\n";
+        executionCode += indent + "sw " + returnVar + "(r0)," + valueRegister + "\n";
+
+        String returnAddress = "t" + node.searchParent(ASTNodeType.FUNCTION_BODY).id;
+        executionCode += indent + "lw r15," + returnAddress + "(r0)\n";
+        executionCode += indent + "jr r15\n";
+
+        registerPool.push(valueRegister);
+    }
+
+    @Override
     protected void visitStatementBlock(ASTNode node) {
         iterateChildren(node);
     }
@@ -496,17 +530,25 @@ public class CodeGenerationVisitor extends Visitor{
     @Override
     protected void visitFunctionDefinition(ASTNode node) {
         iterateChildren(node);
-        executionCode += indent + "jr r15\n";
     }
 
     @Override
     protected void visitFunctionBody(ASTNode node) {
-        executionCode += "% ==== function body:" + node.record.getName() + " =====\n";
+        String recordName = node.table.getName();
+        String functionName = node.table.parent.getName() + "_" + recordName;
 
-        String functionName = node.record.getParent().getName() + "_" + node.record.getName();
+        executionCode += recordName.equals("main")? "entry\n":"";
+        executionCode += "% ==== function body:" + functionName + " =====\n";
         executionCode += functionName + "\n";
 
+        String returnAddress = "t" + node.id;
+        dataCode += returnAddress + indent + "res 4\n";
+        executionCode += indent + "sw " + returnAddress + "(r0),r15\n";
+
         iterateChildren(node);
+
+        executionCode += indent + "lw r15," + returnAddress + "(r0)\n";
+        executionCode += recordName.equals("main")? "":indent + "jr r15\n";
     }
 
     @Override
@@ -523,13 +565,7 @@ public class CodeGenerationVisitor extends Visitor{
             }
         }
 
-        ArrayList<ASTNode> list = new ArrayList<>();
-        ASTNode child = node.leftmostChild;
-        while (child != null) {
-            list.add(child);
-            child = child.rightSibling;
-        }
-
+        ArrayList<ASTNode> list = reverseChildren(node);
         for (int i = list.size() - 1; i >= 0; i--) {
             ASTNode parameterGiven = list.get(i);
             parameterGiven.accept(this);
@@ -563,21 +599,30 @@ public class CodeGenerationVisitor extends Visitor{
 
     @Override
     protected void visitProgram(ASTNode node) {
-        executionCode += "entry\n";
-        iterateChildren(node);
+        ArrayList<ASTNode> list = reverseChildren(node);
+
+        for (int i = list.size() - 1; i >= 0; i--) {
+            ASTNode currentChild = list.get(i);
+            if (list.get(i).type == ASTNodeType.FUNCTION_BODY) {
+                currentChild.record.setName("main");
+                currentChild.record.setParent(node.table);
+            }
+
+            currentChild.accept(this);
+            if (list.get(i).record != null ) {
+                node.record = currentChild.record;
+            }
+            if (list.get(i).offset != 0) {
+                node.offset = currentChild.offset;
+            }
+        }
         executionCode += "hlt\n";
 
         outputToFile();
     }
 
     private void iterateChildren(ASTNode node) {
-        ArrayList<ASTNode> list = new ArrayList<>();
-
-        ASTNode child = node.leftmostChild;
-        while (child != null) {
-            list.add(child);
-            child = child.rightSibling;
-        }
+        ArrayList<ASTNode> list = reverseChildren(node);
 
         for (int i = list.size() - 1; i >= 0; i--) {
             list.get(i).accept(this);
@@ -588,6 +633,17 @@ public class CodeGenerationVisitor extends Visitor{
                 node.offset = list.get(i).offset;
             }
         }
+    }
+
+    private ArrayList<ASTNode> reverseChildren(ASTNode node) {
+        ArrayList<ASTNode> list = new ArrayList<>();
+
+        ASTNode child = node.leftmostChild;
+        while (child != null) {
+            list.add(child);
+            child = child.rightSibling;
+        }
+        return list;
     }
 
     private void binaryOperation(ASTNode lhs, ASTNode rhs, String tempVar, String operation) {
