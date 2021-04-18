@@ -116,6 +116,18 @@ public class SymbolTableRecord {
         return name.equals(record.getName()) && parent.equals(record.parent) && type.equals(record.type);
     }
 
+    public int getElementSize() {
+        VariableType variableType = ((VariableType) this.type);
+        int size = this.size;
+
+        for (Integer dimension: variableType.dimension) {
+            dimension = dimension==null? 16:dimension;
+            size /=dimension;
+        }
+
+        return size;
+    }
+
     @Override
     public String toString() {
         String result = name + ", " + kind + ", " + type + ", " + size + ", ";

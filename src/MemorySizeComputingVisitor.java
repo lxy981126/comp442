@@ -157,7 +157,8 @@ public class MemorySizeComputingVisitor extends Visitor{
 
         if (variableType.dimension.size() != 0) {
             int dimension = 1;
-            for (int i: variableType.dimension) {
+            for (Integer i: variableType.dimension) {
+                i = i==null? 16:i;
                 dimension *= i;
             }
             size *= dimension;

@@ -1,14 +1,13 @@
 
-func function(integer size) : integer {
-
-    return (9);
+func function(integer arr[]) : void {
+    write(arr[2]);
 }
 
 main
 {
     var{
-        integer x;
+        integer x[7];
     }
-    x = function(2);
-  write(x);
+    x[2] = 5;
+    function(x);
 }

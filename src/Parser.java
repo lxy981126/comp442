@@ -55,6 +55,7 @@ public class Parser {
             else {
                 if (nextToken.getType() == TokenType.BLOCK_COMMENT || nextToken.getType() == TokenType.INLINE_COMMENT) {
                     nextToken = analyser.nextToken();
+                    continue;
                 }
 
                 SyntaxSymbol topSyntax = (SyntaxSymbol) top;
