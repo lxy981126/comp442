@@ -157,6 +157,7 @@ public class CodeGenerationVisitor extends Visitor{
             ASTNode index = indexes.get(i);
             ASTNode parameters = parametersList.get(i);
             if (index != null) {
+                index.accept(this);
                 int tempVarSize = node.record.getElementSize();
                 String tempVar = createTempVar(node, tempVarSize);
 
@@ -360,6 +361,7 @@ public class CodeGenerationVisitor extends Visitor{
                     executionCode += indent + "addi " + lhsOffsetRegister + ",r0,0\n";
                 }
                 else {
+                    index.accept(this);
                     executionCode += indent + "lw " + lhsOffsetRegister + "," + index.record.getName() + "(r0)\n";
                     executionCode += indent + "muli " + lhsOffsetRegister + "," + lhsOffsetRegister + "," + rhsExpression.record.getSize() +"\n";
                 }
@@ -389,12 +391,12 @@ public class CodeGenerationVisitor extends Visitor{
         executionCode += "%     ==== pass parameter ====\n";
         dataCode += bufferName + indent + "res 20\n";
         executionCode += indent + "addi " + bufferRegister + ",r0," + bufferName + "\n";
-        executionCode += indent + "addi r14,r0,topaddr\n"; //todo???
+        executionCode += indent + "addi r14,r0,topaddr\n";
         executionCode += indent + "sw -8(r14)," + bufferRegister + "\n";
 
         executionCode += "%     ==== getstr call ====\n";
         executionCode += indent + "jl r15, getstr\n";
-        String varName = node.record.getParent().name + "_" + node.record.getName();
+        String varName = node.record.getName();
         executionCode += indent + "sw " + varName + "(r0),r13\n";
 
         registerPool.push(bufferRegister);

@@ -76,60 +76,60 @@ public class SemanticCheckingVisitor extends Visitor{
 
     private SymbolTableRecord functionCall(ArrayList<ASTNode> idNodes, ASTNode parameterList) {
         SymbolTableRecord returnRecord = new SymbolTableRecord(parameterList.table);
-        SymbolTableRecord functionRecord = null;
-        SymbolTable table;
-        if (idNodes.size() == 1) {
-            table = getParentTable(parameterList.table);
-        }
-        else {
-            table = idNodes.get(idNodes.size() - 1).record.getParent();
-        }
-
-        for (int i = idNodes.size() - 1; i >= 0; i--) {
-            ASTNode idNode = idNodes.get(i);
-            SymbolTableRecord childRecord = table.search(idNode.token.lexeme);
-
-            if (childRecord == null) {
-                String errorMessage = "Semantic Error - Use of undeclared variable: " + idNode.token.lexeme +
-                        "(line " + idNode.token.location + ")\n";
-                errors.put(errorMessage, idNode.token.location);
-                return null;
-            }
-            else {
-                functionRecord = childRecord;
-                table = table.parent;
-            }
-        }
-
-        FunctionType functionType = ((FunctionType) functionRecord.getType());
-        returnRecord.setType(functionType.returnType);
-        ArrayList<VariableType> functionParameters = functionType.parameters;
-        ArrayList<VariableType> givenParameters = new ArrayList<>();
-
-        ASTNode parameter = parameterList.leftmostChild;
-        while (parameter != null) {
-            parameter.table = parameterList.table;
-            parameter.accept(this);
-            givenParameters.add(((VariableType) parameter.record.getType()));
-            parameter = parameter.rightSibling;
-        }
-
-        if (givenParameters.size() != functionParameters.size()) {
-            String errorMessage = "Semantic Error - Wrong number of parameter: " + functionRecord.getName() +
-                    "(line " + parameterList.leftmostChild.record.getLocation() + ")\n";
-            errors.put(errorMessage, parameterList.leftmostChild.record.getLocation());
-            return returnRecord;
-        }
-
-        for (int i = 0; i < functionParameters.size(); i++) {
-            VariableType givenParameter = givenParameters.get(i);
-            VariableType functionParameter = functionParameters.get(i);
-            if (!givenParameter.equals(functionParameter)) {
-                String errorMessage = "Semantic Error - Wrong type of parameter: " + givenParameter +
-                        "(line " + parameterList.leftmostChild.record.getLocation() + ")\n";
-                errors.put(errorMessage, parameterList.leftmostChild.record.getLocation());
-            }
-        }
+//        SymbolTableRecord functionRecord = null;
+//        SymbolTable table;
+//        if (idNodes.size() == 1) {
+//            table = getParentTable(parameterList.table);
+//        }
+//        else {
+//            table = idNodes.get(idNodes.size() - 1).record.getParent();
+//        }
+//
+//        for (int i = idNodes.size() - 1; i >= 0; i--) {
+//            ASTNode idNode = idNodes.get(i);
+//            SymbolTableRecord childRecord = table.search(idNode.token.lexeme);
+//
+//            if (childRecord == null) {
+//                String errorMessage = "Semantic Error - Use of undeclared variable: " + idNode.token.lexeme +
+//                        "(line " + idNode.token.location + ")\n";
+//                errors.put(errorMessage, idNode.token.location);
+//                return null;
+//            }
+//            else {
+//                functionRecord = childRecord;
+//                table = table.parent;
+//            }
+//        }
+//
+//        FunctionType functionType = ((FunctionType) functionRecord.getType());
+//        returnRecord.setType(functionType.returnType);
+//        ArrayList<VariableType> functionParameters = functionType.parameters;
+//        ArrayList<VariableType> givenParameters = new ArrayList<>();
+//
+//        ASTNode parameter = parameterList.leftmostChild;
+//        while (parameter != null) {
+//            parameter.table = parameterList.table;
+//            parameter.accept(this);
+//            givenParameters.add(((VariableType) parameter.record.getType()));
+//            parameter = parameter.rightSibling;
+//        }
+//
+//        if (givenParameters.size() != functionParameters.size()) {
+//            String errorMessage = "Semantic Error - Wrong number of parameter: " + functionRecord.getName() +
+//                    "(line " + parameterList.leftmostChild.record.getLocation() + ")\n";
+//            errors.put(errorMessage, parameterList.leftmostChild.record.getLocation());
+//            return returnRecord;
+//        }
+//
+//        for (int i = 0; i < functionParameters.size(); i++) {
+//            VariableType givenParameter = givenParameters.get(i);
+//            VariableType functionParameter = functionParameters.get(i);
+//            if (!givenParameter.equals(functionParameter)) {
+//                String errorMessage = "Semantic Error - Wrong type of parameter: " + givenParameter +
+//                        "(line " + parameterList.leftmostChild.record.getLocation() + ")\n";
+//                errors.put(errorMessage, parameterList.leftmostChild.record.getLocation());
+//            }
+//        }
 
         return returnRecord;
     }

@@ -266,7 +266,6 @@ public class SemanticAction {
             else {
                 parent.adoptChild(child);
                 stack.pop();
-                canAdoptId = false;
             }
             child = stack.empty()? null:stack.peek();
         }

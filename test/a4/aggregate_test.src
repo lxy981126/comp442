@@ -1,0 +1,23 @@
+class POLYNOMIAL
+{
+	public integer i;
+};
+
+main
+{
+    var{
+        integer arr[7];
+        POLYNOMIAL p;
+    }
+//----4.1----
+    arr[3] = 6;
+    write(arr[3]);
+
+//----5.2----
+    arr[1+1] = 4;
+    write(arr[2]);
+
+//----4.3----
+    p.i = 5;
+    //write(p.i);
+}

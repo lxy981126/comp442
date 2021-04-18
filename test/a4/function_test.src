@@ -1,0 +1,17 @@
+func evaluate(integer x) : integer
+{
+    write(x);
+    return (0);
+}
+
+main
+{
+    var{
+        integer a;
+    }
+
+    a = 6;
+    a = evaluate(a);
+
+    write(a);
+}

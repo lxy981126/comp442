@@ -2,19 +2,14 @@ main
 {
     var{
         integer x;
+        integer s;
     }
-    x = 1 + 3;
+
+    //----3.1 & 5.1----
+    x = (1 + 3) * 2;
     write(x);
 
-    x = 6 - 4;
-    write(x);
-
-    x = 3 * 5;
-    write(x);
-
-    x = 8 / 2;
-    write(x);
-
+    //----3.2----
     if (x > 7) then {
         write(8);
     }
@@ -22,9 +17,13 @@ main
         write(0);
     };
 
+    //----3.3----
     x = 0;
     while (x <= 10) {
+
+        //----3.4----
         write(x);
+        read(s);
         x = x + 1;
     };
 }
