@@ -1,13 +1,16 @@
-
-func function(integer arr[]) : void {
-    write(arr[2]);
-}
+class POLYNOMIAL
+{
+	//public func evaluate(float x) : float;
+	public integer i;
+};
 
 main
 {
     var{
-        integer x[7];
+        integer x;
+        POLYNOMIAL p;
     }
-    x[2] = 5;
-    function(x);
+
+    p.i = 5;
+    write(p.i);
 }

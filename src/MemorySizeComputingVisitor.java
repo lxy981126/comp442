@@ -5,7 +5,7 @@ public class MemorySizeComputingVisitor extends Visitor{
         SymbolTableRecord record = node.table.globalSearch(node.token.lexeme);
         if (record.getKind() == SymbolKind.VARIABLE || record.getKind() == SymbolKind.PARAMETER) {
             VariableType variableType = (VariableType) record.getType();
-            record.setSize(computeVariableSize(variableType));
+            record.setSize(computeVariableSize(node.table, variableType));
         }
     }
 
@@ -40,7 +40,7 @@ public class MemorySizeComputingVisitor extends Visitor{
         node.record.setKind(SymbolKind.VARIABLE);
         node.record.setName(returnName);
         node.record.setType(functionType.returnType);
-        node.record.setSize(computeVariableSize(functionType.returnType));
+        node.record.setSize(computeVariableSize(node.table, functionType.returnType));
         node.table.insert(node.record);
     }
 
@@ -121,7 +121,7 @@ public class MemorySizeComputingVisitor extends Visitor{
         int totalSize = scopeRecord.getSize();
 
         for (SymbolTableRecord record:scopeRecord.getLink().records) {
-            totalSize += record.getSize();
+            totalSize += record.getKind()==SymbolKind.FUNCTION? 0:record.getSize();
         }
         scopeRecord.setSize(totalSize);
     }
@@ -143,7 +143,7 @@ public class MemorySizeComputingVisitor extends Visitor{
         }
     }
 
-    private int computeVariableSize(VariableType variableType) {
+    private int computeVariableSize(SymbolTable table, VariableType variableType) {
         int size = 0;
         if (variableType.className.equals("integer")) {
             size = 4;
@@ -152,7 +152,7 @@ public class MemorySizeComputingVisitor extends Visitor{
             size = 8;
         }
         else {
-            // todo: custom class type
+            size = table.globalSearch(variableType.className).getSize();
         }
 
         if (variableType.dimension.size() != 0) {

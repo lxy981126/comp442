@@ -214,9 +214,9 @@ public class SemanticCheckingVisitor extends Visitor{
             {
                 SymbolTableRecord childRecord = table.globalSearch(childNode.token.lexeme);
                 if (childRecord == null) {
-                    String errorMessage = "Semantic Error - Use of undeclared variable: " + childNode.token.lexeme +
-                            "(line " + childNode.token.location + ")\n";
-                    errors.put(errorMessage, childNode.token.location);
+//                    String errorMessage = "Semantic Error - Use of undeclared variable: " + childNode.token.lexeme +
+//                            "(line " + childNode.token.location + ")\n";
+//                    errors.put(errorMessage, childNode.token.location);
                 }
                 else {
                     lhs = childRecord;
@@ -252,7 +252,7 @@ public class SemanticCheckingVisitor extends Visitor{
             if (lhsType == null) {
                 lhsType = ((VariableType) lhs.getType());
             }
-            checkType(lhs.getName(), rhs.getName(), lhsType, rhs.getType(), lhs.getLocation(), rhs.getLocation());
+            //checkType(lhs.getName(), rhs.getName(), lhsType, rhs.getType(), lhs.getLocation(), rhs.getLocation());
         }
     }
 

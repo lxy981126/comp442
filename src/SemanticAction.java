@@ -325,8 +325,16 @@ public class SemanticAction {
         if (child != null && child.type == ASTNodeType.ASSIGN_OP) {
             assignNode.adoptChild(child);
             stack.pop();
+            child = stack.empty()? null:stack.peek();
         }
-        adoptFuncVar(stack, assignNode);
+        //adoptFuncVar(stack, assignNode);
+
+        while (child != null && (child.type == ASTNodeType.ID ||
+                child.type == ASTNodeType.APARAM_LIST || child.type == ASTNodeType.INDEX_LIST)) {
+            assignNode.adoptChild(child);
+            stack.pop();
+            child = stack.empty()? null:stack.peek();
+        }
 
         stack.push(assignNode);
     }
