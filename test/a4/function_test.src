@@ -1,5 +1,18 @@
+class POLYNOMIAL
+{
+	public integer i;
+	public func polynomial_function(integer y) : integer;
+};
+
+func POLYNOMIAL::polynomial_function(integer y) : integer
+{
+    i = 3;
+    return (0);
+}
+
 func evaluate(integer x) : integer
 {
+//----2.1----
     write(x);
     return (0);
 }
@@ -8,10 +21,17 @@ main
 {
     var{
         integer a;
+        POLYNOMIAL p;
     }
-
     a = 6;
+
+//----2.2----
     a = evaluate(a);
 
+//----2.3----
     write(a);
+
+//----2.3----
+    a = p.polynomial_function(3);
+    write(p.i);
 }

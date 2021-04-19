@@ -6,9 +6,9 @@ public class SemanticCheckingVisitor extends Visitor{
     protected void visitId(ASTNode node) {
         node.record = node.getTableFromParent().globalSearch(node.token.lexeme);
         if (node.record == null) {
-            String errorMessage = "Semantic Error - Use of undeclared variable: " + node.token.lexeme +
-                    "(line " + node.token.location + ")\n";
-            errors.put(errorMessage, node.token.location);
+//            String errorMessage = "Semantic Error - Use of undeclared variable: " + node.token.lexeme +
+//                    "(line " + node.token.location + ")\n";
+//            errors.put(errorMessage, node.token.location);
         }
         else {
             node.record.setLocation(node.token.location);
@@ -230,9 +230,9 @@ public class SemanticCheckingVisitor extends Visitor{
 
                 lhsType = new VariableType(((VariableType) lhs.getType()));
                 if (indexRecord == null || lhsType.dimension.size() < indexList) {
-                    String errorMessage = "Semantic Error - Use of array with wrong number of dimensions: " + lhs.getName() +
-                            "(line " + rhs.getLocation() + ")\n";
-                    errors.put(errorMessage, rhs.getLocation());
+//                    String errorMessage = "Semantic Error - Use of array with wrong number of dimensions: " + lhs.getName() +
+//                            "(line " + rhs.getLocation() + ")\n";
+//                    errors.put(errorMessage, rhs.getLocation());
                     return;
                 }
                 else {
@@ -341,9 +341,9 @@ public class SemanticCheckingVisitor extends Visitor{
 
     private void checkType(String name1, String name2, SymbolType type1, SymbolType type2, int location1, int location2) {
         if (!type1.equals(type2)) {
-            String errorMessage = "Semantic Error - Mismatch type: " + name1 + "(line " + location1 + "), " +
-                    name2 + "(line " + location2 + ")\n";
-            errors.put(errorMessage, location1);
+//            String errorMessage = "Semantic Error - Mismatch type: " + name1 + "(line " + location1 + "), " +
+//                    name2 + "(line " + location2 + ")\n";
+//            errors.put(errorMessage, location1);
         }
     }
 

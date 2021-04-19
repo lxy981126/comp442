@@ -93,6 +93,19 @@ public class MemorySizeComputingVisitor extends Visitor{
     @Override
     protected void visitClassDeclarationBody(ASTNode node) {
         iterateChildren(node);
+        if (node.record.getKind() == SymbolKind.FUNCTION) {
+
+            String functionName = node.record.getName();
+            FunctionType functionType = ((FunctionType) node.record.getType());
+
+            String returnName = node.table.name + "_" + functionName + "_return";
+            node.record = new SymbolTableRecord(node.table);
+            node.record.setKind(SymbolKind.VARIABLE);
+            node.record.setName(returnName);
+            node.record.setType(functionType.returnType);
+            node.record.setSize(computeVariableSize(node.table, functionType.returnType));
+            node.table.insert(node.record);
+        }
     }
 
     @Override

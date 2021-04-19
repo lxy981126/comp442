@@ -519,16 +519,21 @@ public class CodeGenerationVisitor extends Visitor{
 
     @Override
     protected void visitReturnStatement(ASTNode node) {
+        ASTNode functionBody = node.searchParent(ASTNodeType.FUNCTION_BODY);
+        String functionName = functionBody.table.name;
+        functionName = functionBody.table.parent.name + "_" + functionName + "_return";
+
+        String returnVar = functionName;
+        dataCode += returnVar + indent + "res " + functionBody.record.getSize() + "\n";
+        executionCode += "%==== return statement ====\n";
         iterateChildren(node);
-        String returnVar = node.record.getName();
-//        dataCode += returnVar + indent + "res " + node.record.getSize() + "\n";
 
         String valueRegister = registerPool.pop();
         String returnValue = node.record.getName();
         executionCode += indent + "lw " + valueRegister + "," + returnValue + "(r0)\n";
         executionCode += indent + "sw " + returnVar + "(r0)," + valueRegister + "\n";
 
-        String returnAddress = "t" + node.searchParent(ASTNodeType.FUNCTION_BODY).id;
+        String returnAddress = "t" + functionBody.id;
         executionCode += indent + "lw r15," + returnAddress + "(r0)\n";
         executionCode += indent + "jr r15\n";
 
@@ -684,6 +689,9 @@ public class CodeGenerationVisitor extends Visitor{
         ArrayList<ASTNode> list = new ArrayList<>();
         ASTNode child = node.leftmostChild;
         while (child != null) {
+            if (child.table == null) {
+                child.table = node.table;
+            }
             list.add(child);
             child = child.rightSibling;
         }
