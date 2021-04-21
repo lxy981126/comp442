@@ -1,0 +1,17 @@
+main() {
+    var {
+        integer i;
+        float f;
+    }
+    i = 00;
+
+    // this is a inline comment
+    /*
+        this is a block comment
+    */
+    /*
+        /* This is nested block comment */
+    */
+     @
+
+}

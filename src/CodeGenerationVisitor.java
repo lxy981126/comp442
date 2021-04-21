@@ -672,8 +672,7 @@ public class CodeGenerationVisitor extends Visitor{
         for (int i = 0; i < list.size(); i++) {
             ASTNode currentChild = list.get(i);
             if (list.get(i).type == ASTNodeType.FUNCTION_BODY) {
-                currentChild.record.setName("main");
-                currentChild.record.setParent(node.table);
+                currentChild.record = currentChild.table.globalSearch("main");
             }
 
             currentChild.accept(this);

@@ -31,6 +31,10 @@ func type_return(integer i) : string
     return (0);
 }
 
+func missing_return(integer i) : integer
+{
+}
+
 // ====== main ====== //
 main
 {
@@ -44,7 +48,7 @@ main
         UNDECLARED_CLASS undeclared_class;
         integer arr[7];
     }
-/*
+
     int_num = 0.1;
     int_num = int_num * float_num;
 
@@ -52,6 +56,7 @@ main
     undeclared_func(1);
     polynomial.undeclared_member = 0;
     polynomial.undeclared_member_func(0);
+    missing_return(0);
 
     correct_func(0,1);
     correct_func(0.1);
@@ -60,7 +65,7 @@ main
     arr[0][1] = 1;
     correct_func(arr);
 
-    int_num.i = 1; */
+    int_num.i = 1;
 }
 
 

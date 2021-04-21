@@ -65,7 +65,7 @@ public class SemanticCheckingVisitor extends Visitor{
                 parametersList.add(null);
             }
             else if (child.type == ASTNodeType.INDEX_LIST) {
-                if (ids.get(ids.size() - 1) != null) {
+                if (indexes.get(ids.size() - 1) != null) {
                     indexError = true;
                 }
                 else {
@@ -103,7 +103,7 @@ public class SemanticCheckingVisitor extends Visitor{
         }
 
         if (checkType(records)) {
-            node.parent.removeChild(child.parent);
+            node.parent.removeChild(node);
         }
         node.record = records.get(0);
     }
@@ -134,12 +134,28 @@ public class SemanticCheckingVisitor extends Visitor{
     }
 
     @Override
+    protected void visitVariableDeclaration(ASTNode node) {
+        iterateChildren(node);
+    }
+
+    @Override
+    protected void visitVariableDeclarationList(ASTNode node) {
+        iterateChildren(node);
+    }
+
+    @Override
+    protected void visitMethodBody(ASTNode node) {
+        iterateChildren(node);
+    }
+
+    @Override
     public void visitAssignStatement(ASTNode node) {
         ASTNode rhsExpression = null;
         ArrayList<ASTNode> ids = new ArrayList<>();
         ArrayList<ASTNode> indexes = new ArrayList<>();
         ArrayList<ASTNode> parametersList = new ArrayList<>();
 
+        boolean functionCall = false;
         boolean indexError = false;
         ArrayList<ASTNode> list = node.getChildrenInOrder();
         for (int i = 0; i < list.size(); i++) {
@@ -150,7 +166,7 @@ public class SemanticCheckingVisitor extends Visitor{
                 parametersList.add(null);
             }
             else if (child.type == ASTNodeType.INDEX_LIST) {
-                if (ids.get(ids.size() - 1) != null) {
+                if (indexes.get(ids.size() - 1) != null) {
                     indexError = true;
                 }
                 else {
@@ -159,6 +175,7 @@ public class SemanticCheckingVisitor extends Visitor{
             }
             else if (child.type == ASTNodeType.APARAM_LIST) {
                 parametersList.set(ids.size() - 1, child);
+                functionCall = true;
             }
             else if (child.type == ASTNodeType.EXPRESSION) {
                 rhsExpression = child;
@@ -177,6 +194,9 @@ public class SemanticCheckingVisitor extends Visitor{
             node.parent.removeChild(node);
         }
 
+        if (rhsExpression == null) {
+            return;
+        }
         SymbolType rhsType;
         if (rhsExpression.record.getType() instanceof VariableType) {
             rhsType = rhsExpression.record.getType();
@@ -185,7 +205,14 @@ public class SemanticCheckingVisitor extends Visitor{
             rhsType = ((FunctionType) rhsExpression.record.getType()).returnType;
         }
 
-        if (checkType(node.record.getName(), rhsExpression.record.getName(),node.record.getType(),rhsType,
+        SymbolType lhsType;
+        if (functionCall) {
+            lhsType = node.record.getType();
+        }
+        else {
+            lhsType = new VariableType(((VariableType) node.record.getType()).className);
+        }
+        if (checkType(node.record.getName(), rhsExpression.record.getName(),lhsType,rhsType,
                 node.record.getLocation())) {
             node.parent.removeChild(node);
         }
@@ -215,6 +242,26 @@ public class SemanticCheckingVisitor extends Visitor{
     @Override
     protected void visitStatementList(ASTNode node) {
         iterateChildren(node);
+
+        boolean hasReturn = false;
+        ASTNode child = node.leftmostChild;
+        while (child != null) {
+            if (child.type == ASTNodeType.READ_STATEMENT) {
+                hasReturn = true;
+            }
+            child = child.rightSibling;
+        }
+
+        ASTNode functionNode = node.searchParent(ASTNodeType.FUNCTION_BODY);
+        if (functionNode != null && !hasReturn) {
+            FunctionType functionType = ((FunctionType) functionNode.record.getType());
+            if (functionType.returnType != null && !functionType.returnType.className.equals("void")) {
+                String errorMessage = "Semantic Error - Missing return statement: " + functionNode.record.getName() +
+                        "(line " + functionNode.record.getLocation() + ")\n";
+                errors.put(errorMessage, functionNode.record.getLocation());
+                node.parent.removeChild(node);
+            }
+        }
     }
 
     @Override
@@ -269,8 +316,6 @@ public class SemanticCheckingVisitor extends Visitor{
 
     private boolean checkFunctionOrVariable(ASTNode node, ArrayList<ASTNode> ids, ArrayList<ASTNode> indexes,
                                          ArrayList<ASTNode> parametersList) {
-
-        int indexDimension = 0;
         VariableType variableType = null;
         for (int i = 0; i < ids.size(); i++) {
             ASTNode id = ids.get(i);
@@ -288,22 +333,25 @@ public class SemanticCheckingVisitor extends Visitor{
             if (i+1 < ids.size()) {
                 ASTNode nextId = ids.get(i+1);
                 SymbolTableRecord classRecord = id.table.globalSearch(variableType.className);
+                if (classRecord == null) {
+                    String errorMessage = "Semantic Error - Dot operation on primary class: " + variableType.className +
+                            "(line " + node.record.getLocation() + ")\n";
+                    errors.put(errorMessage, node.record.getLocation());
+                    node.parent.removeChild(node);
+                    return true;
+                }
                 nextId.table = classRecord.getLink();
             }
 
             ASTNode index = indexes.get(i);
             if (index != null) {
                 index.accept(this);
-                indexDimension++;
                 if (index.record == null || !((VariableType) index.record.getType()).className.equals("integer")){
                     String errorMessage = "Semantic Error - Array index is not an integer: " + id.record.getName() +
                             "(line " + id.record.getLocation() + ")\n";
                     errors.put(errorMessage, id.record.getLocation());
                     node.parent.removeChild(node);
                 }
-            }
-            else {
-                indexDimension = 0;
             }
 
             ASTNode parameters = parametersList.get(i);
@@ -321,6 +369,13 @@ public class SemanticCheckingVisitor extends Visitor{
                 int parameterCounter = 0;
                 ASTNode parameter = parameters.leftmostChild;
                 while (parameter != null) {
+                    if (parameterCounter >= parametersRequired.size()) {
+                        String errorMessage = "Semantic Error - extra paramter: " +
+                                "(line " + parameter.record.getLocation() + ")\n";
+                        errors.put(errorMessage, parameter.record.getLocation());
+                        node.parent.removeChild(node);
+                        return true;
+                    }
                     SymbolTableRecord parameterRequired = parametersRequired.get(parameterCounter);
                     if (!parameter.record.getType().equals(parameterRequired.getType())) {
                         String errorMessage = "Semantic Error - Wrong type of parameter: " + parameterRequired.getName() +
@@ -332,14 +387,6 @@ public class SemanticCheckingVisitor extends Visitor{
                     parameterCounter++;
                 }
             }
-        }
-
-        if (variableType != null && indexDimension != variableType.dimension.size()) {
-            String errorMessage = "Semantic Error - Use of array with wrong number of dimensions: " + node.record.getName() +
-                    "(line " + node.record.getLocation() + ")\n";
-            errors.put(errorMessage, node.record.getLocation());
-            node.parent.removeChild(node);
-            return true;
         }
         return false;
     }

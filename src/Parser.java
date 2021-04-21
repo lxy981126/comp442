@@ -87,6 +87,7 @@ public class Parser {
                 }
             }
         }
+        analyser.outputStream();
 
         astWriter.write("graph ast {\n");
         dotWriter.write("graph ast {\n");

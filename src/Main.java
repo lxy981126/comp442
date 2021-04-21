@@ -1,8 +1,12 @@
 import java.io.IOException;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        String inputFile = "test/a4/function_test";
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter an input file: ");
+
+        String inputFile = scanner.nextLine();
         Parser parser = new Parser(inputFile);
 
         boolean success= parser.parse();

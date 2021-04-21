@@ -4,20 +4,21 @@ class POLYNOMIAL
 	public integer i;
 };
 
-func POLYNOMIAL::evaluate(float x) : integer
+func POLYNOMIAL::evaluate(integer x, float flo) : integer                        // 2.1, 2.2
 {
-    i = 6;
-    return (0);
+    return (0);                                                   // 2.3
 }
 
 main
 {
     var{
-        integer x;
+        integer s;
+        POLYNOMIAL ps[5];
         POLYNOMIAL p;
+        float f;
     }
-
-    p.i = 5;
-    x = p.evaluate(2);
-    //write(p.i);
+    g = 3;
+    ps[3].i = ps[2][3];
+    //write(ps[3].i);
+    //s = p.evaluate(3,4);
 }

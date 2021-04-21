@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class SymbolTableGenerationVisitor extends Visitor{
 
@@ -395,6 +396,7 @@ public class SymbolTableGenerationVisitor extends Visitor{
                         String errorMessage = "Semantic Error - No declaration for declared member function at line " +
                                 record.getLocation() + ": " + record.getName() + "\n";
                         errors.put(errorMessage, record.getLocation());
+                        record.getParent().delete(record);
                     }
                 }
                 if (type.scope == null) {
@@ -405,6 +407,7 @@ public class SymbolTableGenerationVisitor extends Visitor{
     }
 
     private void semanticChecking(ASTNode programNode) {
+        ArrayList<SymbolTableRecord> recordsToRemove = new ArrayList<>();
         SymbolTable globalTable = programNode.table;
         for (SymbolTableRecord record:globalTable.records) {
 
@@ -423,10 +426,14 @@ public class SymbolTableGenerationVisitor extends Visitor{
                 functionOverloading(record);
                 for (SymbolTableRecord variableRecord:record.getLink().records) {
                     if (variableRecord.getKind() == SymbolKind.VARIABLE || variableRecord.getKind() == SymbolKind.PARAMETER) {
-                        undeclaredClass(variableRecord);
+                        recordsToRemove.addAll(undeclaredClass(variableRecord));
                     }
                 }
             }
+        }
+
+        for (SymbolTableRecord recordToRemove:recordsToRemove) {
+            recordToRemove.getParent().delete(recordToRemove);
         }
     }
 
@@ -484,7 +491,8 @@ public class SymbolTableGenerationVisitor extends Visitor{
         }
     }
 
-    private void undeclaredClass(SymbolTableRecord record) {
+    private ArrayList<SymbolTableRecord> undeclaredClass(SymbolTableRecord record) {
+        ArrayList<SymbolTableRecord> recordsToRemove = new ArrayList<>();
         VariableType variableType = ((VariableType) record.getType());
         String className = variableType.className;
 
@@ -496,8 +504,10 @@ public class SymbolTableGenerationVisitor extends Visitor{
                 String errorMessage = "Semantic Error - Undeclared class at line " +
                         record.getLocation() + ": " + className + "\n";
                 errors.put(errorMessage, record.getLocation());
+                recordsToRemove.add(record);
             }
         }
+        return recordsToRemove;
     }
 
     private void errorHandling(ASTNode node) {

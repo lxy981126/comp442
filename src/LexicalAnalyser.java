@@ -1,10 +1,11 @@
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 
 public class LexicalAnalyser {
     private int lineCounter;
     private Integer backup;
+    private String outputToken;
+    private String errorToken;
+    private String input;
     final private FileReader reader;
     final private State initial;
 
@@ -13,6 +14,9 @@ public class LexicalAnalyser {
         backup = null;
         reader = new FileReader(input);
         initial = DFA.constructDFA();
+        this.input = input.replaceAll(".src","");
+        this.outputToken = "";
+        this.errorToken = "";
     }
 
     public Token nextToken(){
@@ -39,6 +43,7 @@ public class LexicalAnalyser {
                 lexeme += String.valueOf(nextChar);
                 current = current.getNextState(nextChar);
                 if (current == null){
+                    prepareOutputToken(token);
                     return token;
                 }
                 else if (current!=initial){
@@ -64,7 +69,35 @@ public class LexicalAnalyser {
         }catch (IOException e){
             e.printStackTrace();
         }
+        prepareOutputToken(token);
         return token;
     }
 
+    public void outputStream() {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("out/" + input + ".outlextokens"));
+            writer.write(outputToken);
+            writer.close();
+
+            BufferedWriter errorWriter = new BufferedWriter(new FileWriter("out/" + input + ".outlexerrors"));
+            errorWriter.write(errorToken);
+            errorWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void prepareOutputToken(Token token) {
+        if (token == null) {
+            return;
+        }
+        if (token.getType()==TokenType.INVALID_CHARACTER ||
+                token.getType()==TokenType.INVALID_IDENTIFIER ||
+                token.getType()==TokenType.INVALID_NUMBER){
+            errorToken += "Lexical error: "+token.toString()+"\n";
+        }
+        else {
+            outputToken += token + "\n";
+        }
+    }
 }

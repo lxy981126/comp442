@@ -124,7 +124,7 @@ public class ASTNode {
             child.parent.leftmostChild = null;
             return;
         }
-        while (child != null && child.rightSibling.equals(childToRemove)) {
+        while (child != null && childToRemove.equals(child.rightSibling)) {
             child.rightSibling = childToRemove.rightSibling;
             child = child.rightSibling;
         }
