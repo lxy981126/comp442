@@ -49,7 +49,7 @@
 <VariableIdnestTail> ::= '.' #id# 'id' <VariableIdnest>
 <VariableIdnestTail> ::= EPSILON
 
-<IndiceRep> ::= '[' <Expr> ']' <IndiceRep>  #indexList#
+<IndiceRep> ::= '[' <Expr> ']' #indexList# <IndiceRep>
 <IndiceRep> ::= EPSILON
 
 <StatBlock> ::= '{' <StatementList> #statList# '}' #statBlock#

@@ -174,6 +174,9 @@ public class MemorySizeComputingVisitor extends Visitor{
         else if (variableType.className.equals("float")){
             size = 8;
         }
+        else if (variableType.className.equals("string")) {
+            size = 20;
+        }
         else {
             size = table.globalSearch(variableType.className).getSize();
         }

@@ -44,7 +44,7 @@ main
         UNDECLARED_CLASS undeclared_class;
         integer arr[7];
     }
-
+/*
     int_num = 0.1;
     int_num = int_num * float_num;
 
@@ -60,7 +60,7 @@ main
     arr[0][1] = 1;
     correct_func(arr);
 
-    int_num.i = 1;
+    int_num.i = 1; */
 }
 
 

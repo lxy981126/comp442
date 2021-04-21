@@ -1,3 +1,8 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+
 public class ASTNode {
     static int idCounter = 0;
     ASTNode parent;
@@ -111,5 +116,33 @@ public class ASTNode {
             parent = parent.parent;
         }
         return parent;
+    }
+
+    public void removeChild(ASTNode childToRemove) {
+        ASTNode child = leftmostChild;
+        if (childToRemove.equals(child)) {
+            child.parent.leftmostChild = null;
+            return;
+        }
+        while (child != null && child.rightSibling.equals(childToRemove)) {
+            child.rightSibling = childToRemove.rightSibling;
+            child = child.rightSibling;
+        }
+    }
+
+    public ArrayList<ASTNode> getChildrenInOrder() {
+        ArrayList<ASTNode> list = new ArrayList<>();
+        ArrayList<ASTNode> reversedList = new ArrayList<>();
+
+        ASTNode child = this.leftmostChild;
+        while (child != null) {
+            list.add(child);
+            child = child.rightSibling;
+        }
+
+        for (int i = list.size() - 1; i >= 0; i--) {
+            reversedList.add(list.get(i));
+        }
+        return reversedList;
     }
 }

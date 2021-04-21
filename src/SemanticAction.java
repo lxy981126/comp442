@@ -110,7 +110,7 @@ public class SemanticAction {
         }
         else if (symbol.name.equals("indexList")) {
             ArrayList<ASTNodeType> types = new ArrayList<>(Arrays.asList(ASTNodeType.EXPRESSION));
-            doAction(stack, symbol, types);
+            actionInOrder(stack, symbol, types);
         }
         else if (symbol.name.equals("statBlock")) {
             ArrayList<ASTNodeType> types = new ArrayList<>(Arrays.asList(ASTNodeType.STATEMENT_LIST,
@@ -269,22 +269,6 @@ public class SemanticAction {
             }
             child = stack.empty()? null:stack.peek();
         }
-
-//        int idToBeAdopted = 1;
-//
-//        while (child != null && (child.type == ASTNodeType.INDEX_LIST ||
-//                child.type == ASTNodeType.APARAM_LIST ||
-//                (child.type == ASTNodeType.ID && idToBeAdopted > 0))) {
-//            parent.adoptChild(child);
-//            if (child.type == ASTNodeType.INDEX_LIST || child.type == ASTNodeType.APARAM_LIST) {
-//                idToBeAdopted++;
-//            }
-//            else {
-//                idToBeAdopted--;
-//            }
-//            stack.pop();
-//            child = stack.empty()? null:stack.peek();
-//        }
     }
 
     private static void factorAction(Stack<ASTNode> stack,
@@ -357,15 +341,6 @@ public class SemanticAction {
             child = stack.empty()? null:stack.peek();
         }
         adoptFuncVar(stack, assignNode);
-
-//        while (child != null && (child.type == ASTNodeType.ID ||
-//                child.type == ASTNodeType.APARAM_LIST ||
-//                child.type == ASTNodeType.INDEX_LIST || child.type == ASTNodeType.DOT)) {
-//            assignNode.adoptChild(child);
-//            stack.pop();
-//            child = stack.empty()? null:stack.peek();
-//        }
-
         stack.push(assignNode);
     }
 }

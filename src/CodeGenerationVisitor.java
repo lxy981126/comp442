@@ -111,7 +111,7 @@ public class CodeGenerationVisitor extends Visitor{
 
     @Override
     protected void visitFunctionOrVariable(ASTNode node) {
-        ArrayList<ASTNode> children = reverseChildren(node);
+        ArrayList<ASTNode> children = node.getChildrenInOrder();
         ArrayList<ASTNode> ids = new ArrayList<>();
         ArrayList<ASTNode> indexes = new ArrayList<>();
         ArrayList<ASTNode> parametersList = new ArrayList<>();
@@ -316,7 +316,7 @@ public class CodeGenerationVisitor extends Visitor{
         ArrayList<ASTNode> indexes = new ArrayList<>();
         ArrayList<ASTNode> functionParametersList = new ArrayList<>();
 
-        ArrayList<ASTNode> list = reverseChildren(node);
+        ArrayList<ASTNode> list = node.getChildrenInOrder();
         for (int i = 0; i < list.size(); i++) {
             ASTNode child = list.get(i);
             if (child.type == ASTNodeType.ID){
@@ -486,6 +486,9 @@ public class CodeGenerationVisitor extends Visitor{
 
         ASTNode child = node.leftmostChild;
         while (child != null) {
+            if (child.table == null) {
+                child.table = node.table;
+            }
             if (child.type == ASTNodeType.EXPRESSION) {
                 expression = child;
             }
@@ -521,10 +524,11 @@ public class CodeGenerationVisitor extends Visitor{
     protected void visitReturnStatement(ASTNode node) {
         ASTNode functionBody = node.searchParent(ASTNodeType.FUNCTION_BODY);
         String functionName = functionBody.table.name;
+        SymbolTableRecord functionRecord = functionBody.table.globalSearch(functionName);
         functionName = functionBody.table.parent.name + "_" + functionName + "_return";
 
         String returnVar = functionName;
-        dataCode += returnVar + indent + "res " + functionBody.record.getSize() + "\n";
+        dataCode += returnVar + indent + "res " + functionRecord.getSize() + "\n";
         executionCode += "%==== return statement ====\n";
         iterateChildren(node);
 
@@ -629,7 +633,7 @@ public class CodeGenerationVisitor extends Visitor{
             }
         }
 
-        ArrayList<ASTNode> list = reverseChildren(node);
+        ArrayList<ASTNode> list = node.getChildrenInOrder();
         for (int i = list.size() - 1; i >= 0; i--) {
             ASTNode parameterGiven = list.get(i);
             parameterGiven.accept(this);
@@ -663,7 +667,7 @@ public class CodeGenerationVisitor extends Visitor{
 
     @Override
     protected void visitProgram(ASTNode node) {
-        ArrayList<ASTNode> list = reverseChildren(node);
+        ArrayList<ASTNode> list = node.getChildrenInOrder();
 
         for (int i = 0; i < list.size(); i++) {
             ASTNode currentChild = list.get(i);
@@ -705,22 +709,6 @@ public class CodeGenerationVisitor extends Visitor{
                 node.offset = list.get(i).offset;
             }
         }
-    }
-
-    private ArrayList<ASTNode> reverseChildren(ASTNode node) {
-        ArrayList<ASTNode> list = new ArrayList<>();
-        ArrayList<ASTNode> reversedList = new ArrayList<>();
-
-        ASTNode child = node.leftmostChild;
-        while (child != null) {
-            list.add(child);
-            child = child.rightSibling;
-        }
-
-        for (int i = list.size() - 1; i >= 0; i--) {
-            reversedList.add(list.get(i));
-        }
-        return reversedList;
     }
 
     private void binaryOperation(ASTNode lhs, ASTNode rhs, String tempVar, String operation) {

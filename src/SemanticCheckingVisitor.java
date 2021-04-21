@@ -1,4 +1,8 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class SemanticCheckingVisitor extends Visitor{
 
@@ -6,9 +10,10 @@ public class SemanticCheckingVisitor extends Visitor{
     protected void visitId(ASTNode node) {
         node.record = node.getTableFromParent().globalSearch(node.token.lexeme);
         if (node.record == null) {
-//            String errorMessage = "Semantic Error - Use of undeclared variable: " + node.token.lexeme +
-//                    "(line " + node.token.location + ")\n";
-//            errors.put(errorMessage, node.token.location);
+            String errorMessage = "Semantic Error - Use of undeclared variable: " + node.token.lexeme +
+                    "(line " + node.token.location + ")\n";
+            errors.put(errorMessage, node.token.location);
+            node.parent.removeChild(node);
         }
         else {
             node.record.setLocation(node.token.location);
@@ -46,92 +51,41 @@ public class SemanticCheckingVisitor extends Visitor{
 
     @Override
     protected void visitFunctionOrVariable(ASTNode node) {
-        ArrayList<ASTNode> nodes = new ArrayList<>();
-        ASTNode parameter = null;
-        boolean isFunctionCall = false;
+        ArrayList<ASTNode> ids = new ArrayList<>();
+        ArrayList<ASTNode> indexes = new ArrayList<>();
+        ArrayList<ASTNode> parametersList = new ArrayList<>();
 
-        ASTNode child = node.leftmostChild;
-        while (child != null) {
-            child.table = node.table;
-            if (child.type == ASTNodeType.ID || child.type == ASTNodeType.INDEX_LIST) {
-                nodes.add(child);
+        boolean indexError = false;
+        ArrayList<ASTNode> list = node.getChildrenInOrder();
+        for (int i = 0; i < list.size(); i++) {
+            ASTNode child = list.get(i);
+            if (child.type == ASTNodeType.ID){
+                ids.add(child);
+                indexes.add(null);
+                parametersList.add(null);
             }
-            if (child.type == ASTNodeType.APARAM_LIST) {
-                isFunctionCall = true;
-                parameter = child;
+            else if (child.type == ASTNodeType.INDEX_LIST) {
+                if (ids.get(ids.size() - 1) != null) {
+                    indexError = true;
+                }
+                else {
+                    indexes.set(ids.size() - 1, child);
+                }
             }
-            child = child.rightSibling;
+            else if (child.type == ASTNodeType.APARAM_LIST) {
+                parametersList.set(ids.size() - 1, child);
+            }
+        }
+        if (checkFunctionOrVariable(node, ids, indexes, parametersList)) {
+            return;
         }
 
-        if (isFunctionCall) {
-            node.record = functionCall(nodes, parameter);
+        if (indexError) {
+            String errorMessage = "Semantic Error - Use of array with wrong number of dimensions: " + node.record.getName() +
+                    "(line " + node.record.getLocation() + ")\n";
+            errors.put(errorMessage, node.record.getLocation());
+            node.parent.removeChild(node);
         }
-        else {
-            for (ASTNode idNode: nodes) {
-                idNode.accept(this);
-                node.record = idNode.record;
-            }
-        }
-    }
-
-    private SymbolTableRecord functionCall(ArrayList<ASTNode> idNodes, ASTNode parameterList) {
-        SymbolTableRecord returnRecord = new SymbolTableRecord(parameterList.table);
-//        SymbolTableRecord functionRecord = null;
-//        SymbolTable table;
-//        if (idNodes.size() == 1) {
-//            table = getParentTable(parameterList.table);
-//        }
-//        else {
-//            table = idNodes.get(idNodes.size() - 1).record.getParent();
-//        }
-//
-//        for (int i = idNodes.size() - 1; i >= 0; i--) {
-//            ASTNode idNode = idNodes.get(i);
-//            SymbolTableRecord childRecord = table.search(idNode.token.lexeme);
-//
-//            if (childRecord == null) {
-//                String errorMessage = "Semantic Error - Use of undeclared variable: " + idNode.token.lexeme +
-//                        "(line " + idNode.token.location + ")\n";
-//                errors.put(errorMessage, idNode.token.location);
-//                return null;
-//            }
-//            else {
-//                functionRecord = childRecord;
-//                table = table.parent;
-//            }
-//        }
-//
-//        FunctionType functionType = ((FunctionType) functionRecord.getType());
-//        returnRecord.setType(functionType.returnType);
-//        ArrayList<VariableType> functionParameters = functionType.parameters;
-//        ArrayList<VariableType> givenParameters = new ArrayList<>();
-//
-//        ASTNode parameter = parameterList.leftmostChild;
-//        while (parameter != null) {
-//            parameter.table = parameterList.table;
-//            parameter.accept(this);
-//            givenParameters.add(((VariableType) parameter.record.getType()));
-//            parameter = parameter.rightSibling;
-//        }
-//
-//        if (givenParameters.size() != functionParameters.size()) {
-//            String errorMessage = "Semantic Error - Wrong number of parameter: " + functionRecord.getName() +
-//                    "(line " + parameterList.leftmostChild.record.getLocation() + ")\n";
-//            errors.put(errorMessage, parameterList.leftmostChild.record.getLocation());
-//            return returnRecord;
-//        }
-//
-//        for (int i = 0; i < functionParameters.size(); i++) {
-//            VariableType givenParameter = givenParameters.get(i);
-//            VariableType functionParameter = functionParameters.get(i);
-//            if (!givenParameter.equals(functionParameter)) {
-//                String errorMessage = "Semantic Error - Wrong type of parameter: " + givenParameter +
-//                        "(line " + parameterList.leftmostChild.record.getLocation() + ")\n";
-//                errors.put(errorMessage, parameterList.leftmostChild.record.getLocation());
-//            }
-//        }
-
-        return returnRecord;
     }
 
     @Override
@@ -148,7 +102,9 @@ public class SemanticCheckingVisitor extends Visitor{
             child = child.rightSibling;
         }
 
-        checkType(records);
+        if (checkType(records)) {
+            node.parent.removeChild(child.parent);
+        }
         node.record = records.get(0);
     }
 
@@ -166,7 +122,9 @@ public class SemanticCheckingVisitor extends Visitor{
             child = child.rightSibling;
         }
 
-        checkType(records);
+        if (checkType(records)) {
+            node.parent.removeChild(node);
+        }
         node.record = records.get(0);
     }
 
@@ -177,82 +135,59 @@ public class SemanticCheckingVisitor extends Visitor{
 
     @Override
     public void visitAssignStatement(ASTNode node) {
-        ArrayList<ASTNode> lhsList = new ArrayList<>();
-        SymbolTableRecord lhs = null;
-        SymbolTableRecord rhs = null;
-        boolean isFunctionCall = false;
-        ASTNode parameter = null;
+        ASTNode rhsExpression = null;
+        ArrayList<ASTNode> ids = new ArrayList<>();
+        ArrayList<ASTNode> indexes = new ArrayList<>();
+        ArrayList<ASTNode> parametersList = new ArrayList<>();
 
-        ASTNode child = node.leftmostChild;
-        while (child != null) {
-            child.table = node.table;
-            if (child.type == ASTNodeType.ID || child.type == ASTNodeType.INDEX_LIST) {
-                lhsList.add(child);
+        boolean indexError = false;
+        ArrayList<ASTNode> list = node.getChildrenInOrder();
+        for (int i = 0; i < list.size(); i++) {
+            ASTNode child = list.get(i);
+            if (child.type == ASTNodeType.ID){
+                ids.add(child);
+                indexes.add(null);
+                parametersList.add(null);
             }
-            else if (child.type == ASTNodeType.EXPRESSION) {
-                child.accept(this);
-                rhs = child.record;
+            else if (child.type == ASTNodeType.INDEX_LIST) {
+                if (ids.get(ids.size() - 1) != null) {
+                    indexError = true;
+                }
+                else {
+                    indexes.set(ids.size() - 1, child);
+                }
             }
             else if (child.type == ASTNodeType.APARAM_LIST) {
-                isFunctionCall = true;
-                parameter = child;
+                parametersList.set(ids.size() - 1, child);
             }
-            child = child.rightSibling;
+            else if (child.type == ASTNodeType.EXPRESSION) {
+                rhsExpression = child;
+                rhsExpression.accept(this);
+            }
         }
-
-        if (isFunctionCall) {
-            node.record = functionCall(lhsList, parameter);
+        if (checkFunctionOrVariable(node, ids, indexes, parametersList))
+        {
             return;
         }
 
-        VariableType lhsType = null;
-        int indexList = 0;
-        SymbolTable table = lhsList.get(lhsList.size() - 1).record.getParent();
-        for (int i = lhsList.size() - 1; i >= 0; i--) {
-            ASTNode childNode = lhsList.get(i);
-            if (childNode.type == ASTNodeType.ID)
-            {
-                SymbolTableRecord childRecord = table.globalSearch(childNode.token.lexeme);
-                if (childRecord == null) {
-//                    String errorMessage = "Semantic Error - Use of undeclared variable: " + childNode.token.lexeme +
-//                            "(line " + childNode.token.location + ")\n";
-//                    errors.put(errorMessage, childNode.token.location);
-                }
-                else {
-                    lhs = childRecord;
-                    table = table.parent;
-                }
-            }
-            else if (childNode.type == ASTNodeType.INDEX_LIST) {
-                indexList++;
-                childNode.accept(this);
-                SymbolTableRecord indexRecord = childNode.record;
-
-                lhsType = new VariableType(((VariableType) lhs.getType()));
-                if (indexRecord == null || lhsType.dimension.size() < indexList) {
-//                    String errorMessage = "Semantic Error - Use of array with wrong number of dimensions: " + lhs.getName() +
-//                            "(line " + rhs.getLocation() + ")\n";
-//                    errors.put(errorMessage, rhs.getLocation());
-                    return;
-                }
-                else {
-                    lhsType.dimension.remove(0);
-                }
-
-                if (!((VariableType) indexRecord.getType()).className.equals("integer")) {
-                    String errorMessage = "Semantic Error - Array index is not an integer: " + lhs.getName() +
-                            "(line " + indexRecord.getLocation() + ")\n";
-                    errors.put(errorMessage, indexRecord.getLocation());
-                    return;
-                }
-            }
+        if (indexError) {
+            String errorMessage = "Semantic Error - Use of array with wrong number of dimensions: " + node.record.getName() +
+                    "(line " + node.record.getLocation() + ")\n";
+            errors.put(errorMessage, node.record.getLocation());
+            node.parent.removeChild(node);
         }
 
-        if (lhs != null && rhs != null) {
-            if (lhsType == null) {
-                lhsType = ((VariableType) lhs.getType());
-            }
-            //checkType(lhs.getName(), rhs.getName(), lhsType, rhs.getType(), lhs.getLocation(), rhs.getLocation());
+        SymbolType rhsType;
+        if (rhsExpression.record.getType() instanceof VariableType) {
+            rhsType = rhsExpression.record.getType();
+        }
+        else {
+            rhsType = ((FunctionType) rhsExpression.record.getType()).returnType;
+        }
+
+        if (checkType(node.record.getName(), rhsExpression.record.getName(),node.record.getType(),rhsType,
+                node.record.getLocation())) {
+            node.parent.removeChild(node);
         }
     }
 
@@ -270,8 +205,10 @@ public class SemanticCheckingVisitor extends Visitor{
             child = child.rightSibling;
         }
         if (returnRecord != null && givenRecord != null) {
-            checkType(returnRecord.getName(), givenRecord.getName(), returnType.returnType, givenRecord.getType(),
-                    returnRecord.getLocation(), givenRecord.getLocation());
+            if (checkType(returnRecord.getName(), givenRecord.getName(), returnType.returnType, givenRecord.getType(),
+                    returnRecord.getLocation())) {
+                node.parent.removeChild(node);
+            }
         }
     }
 
@@ -330,27 +267,102 @@ public class SemanticCheckingVisitor extends Visitor{
         }
     }
 
-    private void checkType(ArrayList<SymbolTableRecord> records) {
+    private boolean checkFunctionOrVariable(ASTNode node, ArrayList<ASTNode> ids, ArrayList<ASTNode> indexes,
+                                         ArrayList<ASTNode> parametersList) {
+
+        int indexDimension = 0;
+        VariableType variableType = null;
+        for (int i = 0; i < ids.size(); i++) {
+            ASTNode id = ids.get(i);
+            id.accept(this);
+            if (id.record == null) {
+                node.parent.removeChild(node);
+                return true;
+            }
+
+            variableType = id.record.getType() instanceof VariableType ? ((VariableType) id.record.getType()):null;
+            if (id.record != null) {
+                node.record = id.record;
+            }
+
+            if (i+1 < ids.size()) {
+                ASTNode nextId = ids.get(i+1);
+                SymbolTableRecord classRecord = id.table.globalSearch(variableType.className);
+                nextId.table = classRecord.getLink();
+            }
+
+            ASTNode index = indexes.get(i);
+            if (index != null) {
+                index.accept(this);
+                indexDimension++;
+                if (index.record == null || !((VariableType) index.record.getType()).className.equals("integer")){
+                    String errorMessage = "Semantic Error - Array index is not an integer: " + id.record.getName() +
+                            "(line " + id.record.getLocation() + ")\n";
+                    errors.put(errorMessage, id.record.getLocation());
+                    node.parent.removeChild(node);
+                }
+            }
+            else {
+                indexDimension = 0;
+            }
+
+            ASTNode parameters = parametersList.get(i);
+            if (parameters != null){
+                parameters.record = node.record;
+                parameters.accept(this);
+
+                ArrayList<SymbolTableRecord> parametersRequired = new ArrayList<>();
+                for (SymbolTableRecord record: node.record.getLink().records) {
+                    if (record.getKind() == SymbolKind.PARAMETER) {
+                        parametersRequired.add(record);
+                    }
+                }
+
+                int parameterCounter = 0;
+                ASTNode parameter = parameters.leftmostChild;
+                while (parameter != null) {
+                    SymbolTableRecord parameterRequired = parametersRequired.get(parameterCounter);
+                    if (!parameter.record.getType().equals(parameterRequired.getType())) {
+                        String errorMessage = "Semantic Error - Wrong type of parameter: " + parameterRequired.getName() +
+                                "(line " + parameter.record.getLocation() + ")\n";
+                        errors.put(errorMessage, parameter.record.getLocation());
+                        node.parent.removeChild(node);
+                    }
+                    parameter = parameter.rightSibling;
+                    parameterCounter++;
+                }
+            }
+        }
+
+        if (variableType != null && indexDimension != variableType.dimension.size()) {
+            String errorMessage = "Semantic Error - Use of array with wrong number of dimensions: " + node.record.getName() +
+                    "(line " + node.record.getLocation() + ")\n";
+            errors.put(errorMessage, node.record.getLocation());
+            node.parent.removeChild(node);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean checkType(ArrayList<SymbolTableRecord> records) {
+        boolean mismatchType = false;
         for (int i = 1; i < records.size(); i++) {
             SymbolTableRecord record1 = records.get(i - 1);
             SymbolTableRecord record2 = records.get(i);
-            checkType(record1.getName(), record2.getName(), record1.getType(), record2.getType(), record1.getLocation(),
-                    record2.getLocation());
+            mismatchType = checkType(record1.getName(), record2.getName(), record1.getType(), record2.getType(),
+                    record1.getLocation());
         }
+        return mismatchType;
     }
 
-    private void checkType(String name1, String name2, SymbolType type1, SymbolType type2, int location1, int location2) {
+    private boolean checkType(String name1, String name2, SymbolType type1, SymbolType type2, int location1) {
         if (!type1.equals(type2)) {
-//            String errorMessage = "Semantic Error - Mismatch type: " + name1 + "(line " + location1 + "), " +
-//                    name2 + "(line " + location2 + ")\n";
-//            errors.put(errorMessage, location1);
+            String errorMessage = "Semantic Error - Mismatch type: " + name1 + ", " +
+                    name2 + "(line " + location1 + ")\n";
+            errors.put(errorMessage, location1);
+            return true;
         }
+        return false;
     }
 
-    private SymbolTable getParentTable(SymbolTable table) {
-        while (table.parent != null) {
-            table = table.parent;
-        }
-        return table;
-    }
 }
